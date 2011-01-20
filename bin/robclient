@@ -1,0 +1,52 @@
+#!/usr/bin/env ruby19
+
+require 'optparse'
+require 'socket'
+
+options = {}
+@opts = OptionParser.new do |opts|
+  opts.banner = "Usage: robclient -u <unix socket patt> <robert args...>"
+
+  opts.on("-u PATH", "--unix-socket=PATH", "Path to Robert's socket") do |v|
+    options[:unix_socket_path] = v
+  end
+  opts.on_tail("-h", "--help", "Show this message") do
+    puts opts
+    exit
+  end
+end
+@opts.parse!(ARGV)
+
+def usage
+  puts(@opts)
+  exit(1)
+end
+
+unless options[:unix_socket_path]
+  puts("please specify unix socket path")
+  usage
+end
+
+if ARGV.empty?
+  puts("please specify robert command")
+  usage
+end
+
+conn = UNIXSocket.new(options[:unix_socket_path])
+begin
+  Marshal.dump(ARGV, conn)
+  conn.flush
+  conn.close_write
+  results = Marshal.load(conn)
+  conn.close_read
+
+  $stderr.write(results[:stderr])
+  $stdout.write(results[:stdout])
+  exit(results[:exit_code])
+ensure
+  if !conn.closed?
+    conn.close rescue $stderr.puts($!.to_s)
+  end
+end
+
+exit(1)

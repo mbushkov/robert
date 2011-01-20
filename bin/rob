@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby19
+
+module Robert
+  def self.describe(*args)
+  end
+end
+
+require 'robert/cli'
+cli = Robert::CLI.new
+cli.execute ARGV, ENV rescue exit(1)
