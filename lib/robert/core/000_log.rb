@@ -1,12 +1,12 @@
 ext :log do
-  var[:log,:level,:trace] = 5
-  var[:log,:level,:debug] = 4
-  var[:log,:level,:info] = 3
-  var[:log,:level,:warning] = 2
-  var[:log,:level,:error] = 1
-  var[:log,:level,:fatal] = 0
+  var[:log,:level,:trace] = LOG_LEVEL_TRACE = 5
+  var[:log,:level,:debug] = LOG_LEVEL_DEBUG = 4
+  var[:log,:level,:info] = LOG_LEVEL_INFO = 3
+  var[:log,:level,:warning] = LOG_LEVEL_WARNING = 2
+  var[:log,:level,:error] = LOG_LEVEL_ERROR = 1
+  var[:log,:level,:fatal] = LOG_LEVEL_FATAL = 0
 
-  var(:log,:level) { var[:log,:level,:trace] }
+  var[:log,:level] = LOG_LEVEL_TRACE
 
   def log(level, message = nil, &block)
     raise ArgumentError, "either string or block should be provided" if message && block
@@ -16,31 +16,35 @@ ext :log do
   end
 
   def logt(message = nil, &block)
-    log(var[:log,:level,:trace], message, &block)
+    log(LOG_LEVEL_TRACE, message, &block)
   end
 
   def logd(message = nil, &block)
-    log(var[:log,:level,:debug], message, &block)
+    log(LOG_LEVEL_DEBUG, message, &block)
   end
 
   def logi(message = nil, &block)
-    log(var[:log,:level,:info], message, &block)
+    log(LOG_LEVEL_INFO, message, &block)
   end
 
   def logw(message = nil, &block)
-    log(var[:log,:level,:warning], message, &block)
+    log(LOG_LEVEL_WARNING, message, &block)
   end
 
   def loge(message = nil, &block)
-    log(var[:log,:level,:error], message, &block)
+    log(LOG_LEVEL_ERROR, message, &block)
   end
 
   def logf(message = nil, &block)
-    log(var[:log,:level,:fatal], message, &block)
+    log(LOG_LEVEL_FATAL, message, &block)
   end
 
   def log_level
-    var[:log,:level]
+    begin
+      $top.rules.eval_rule(rule_ctx + [:cmdline,:args,:log,:level], self)
+    rescue RuleStorage::NoSuitableRuleFoundError
+      $top.rules.eval_rule(rule_ctx + [:log,:level], self)
+    end
   end
 end
 

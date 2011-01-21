@@ -49,7 +49,7 @@ module Robert
         class << cv; alias_method :orig_rules, :rules; end if !cv.respond_to?(:orig_rules)
 
         cv.acts.each do |k,v|
-          ctx = RulesEvaluationContext.new([ck.to_sym], rules)
+          ctx = RulesDefinitionContext.new([ck.to_sym], rules)
           v.call(ctx)
         end
         rules.add_all(cv.orig_rules)

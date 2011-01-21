@@ -136,14 +136,14 @@ module Robert
     end                       
   end
 
-  # RulesEvaluationContext is used to collect all rules defined in the act and its' next acts.
-  # Uses RulesEvaluator to process rules. Processed rules are added to the supplied rules container.
-  class RulesEvaluationContext
+  # RulesDefinitionContext is used to collect all rules defined in the act and its' next acts.
+  # Uses RulesDefiner to process rules. Processed rules are added to the supplied rules container.
+  class RulesDefinitionContext
     include Context
 
     def initialize(rule_ctx, rules_container)
       @rule_ctx = rule_ctx
-      @rules_evaluator = Object.new.extend(RulesEvaluator)
+      @rules_evaluator = Object.new.extend(RulesDefiner)
 
       class << @rules_evaluator; self; end.class_eval do
         attr_accessor :rule_ctx

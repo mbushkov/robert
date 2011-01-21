@@ -264,29 +264,22 @@ module Robert
 
   module RulesEvaluator
     class RuleId
-      def initialize(get_rule, add_rule)
-        @get_rule, @add_rule = get_rule, add_rule
+      def initialize(&block)
+        @get_rule = block
       end
 
       def [](*ctx)
         @get_rule.call(ctx)
       end
-
-      def []=(*ctx, value)
-        @add_rule.call(ctx, value)
-      end
     end
-
-    def var(*args, &block)
+    
+    def var(*args)
       if args.empty?
-        RuleId.new(->(ctx) { rules.eval_rule((@rule_ctx_override || rule_ctx) + ctx, self) },
-                   ->(ctx, value) { rules << Rule.new((@rule_ctx_override || rule_ctx) + ctx, value)})
-      else
-        if block.nil?
-          rules.eval_rule((@rule_ctx_override || rule_ctx) + args, self)
-        else
-          rules << Rule.new((@rule_ctx_override || rule_ctx) + args, block)
+        RuleId.new do |ctx|
+          rules.eval_rule((@rule_ctx_override || rule_ctx) + ctx, self)
         end
+      else
+        rules.eval_rule((@rule_ctx_override || rule_ctx) + args, self)
       end
     end
 
@@ -299,10 +292,36 @@ module Robert
         end
       }
       if args.empty?
-        RuleId.new(protected_eval, ->(ctx, val) { raise "can't set rule with var? " })
+        RuleId.new(&protected_eval)
       else
-        protected_eval.call(*args)
+        protected_eval.call(args)
       end
+    end
+  end
+
+  module RulesDefiner
+    class RuleId
+      def initialize(&block)
+        @add_rule = block
+      end
+
+      def []=(*ctx, value)
+        @add_rule.call(ctx, value)
+      end
+    end
+
+    def var(*args, &block)
+      if args.empty?
+        RuleId.new do |ctx, value|
+          rules << Rule.new((@rule_ctx_override || rule_ctx) + ctx, value)
+        end
+      else
+        rules << Rule.new((@rule_ctx_override || rule_ctx) + args, block)
+      end
+    end
+
+    def var?(*args)
+      raise "can't set rule with var? "
     end
 
     def with_rule_ctx(*args)
@@ -314,11 +333,11 @@ module Robert
       ensure
         @rule_ctx_override = prev_rule_ctx_override
       end
-    end
+    end    
   end
 
   module RulesContainer
-    include RulesEvaluator
+    include RulesDefiner
 
     def rules
       @rules ||= []
@@ -326,7 +345,7 @@ module Robert
   end
 
   module RulesStorageContainer
-    include RulesEvaluator
+    include RulesDefiner
 
     def rules
       @rule_storage ||= RuleStorage.new

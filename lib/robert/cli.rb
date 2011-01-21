@@ -45,6 +45,8 @@ module Robert
         
         $top.logd "all rules and extensions were processed"
 
+        Configuration.send(:include, RulesEvaluator)
+
         # if $top.var?[:cmdline,:names] &&
         #     unknown_name = $top.var[:cmdline,:names].find { |name| !$top.confs_names.include?(name) }
         #   raise "unknown name #{unknown_name}"
