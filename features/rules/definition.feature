@@ -47,4 +47,21 @@ Feature: rules can have constant values or being evaluated every time they're ac
     When I run "rob2 eval my_project,another_var"
     Then the output should contain "43"
 
+  Scenario: rules can't be evaluated when defining other rules
+    Given a Robert configuration with:
+    """
+    var[:my_project,:var] = 42
+    var[:my_project,:string] = "some string #{var[:my_project,:var]"
+    """
+    When I run "rob2 dump rules"
+    Then the exit status should not be 0
+
+  Scenario: rules can't be evaluated when defining other rules (i.e. can't be last in the assignments chain)
+    Given a Robert configuration with:
+    """
+    var[:my_project,:var] = 42
+    var[:my_project,:var2] = var[:my_project,:var]
+    """
+    When I run "rob2 dump rules"
+    Then the exit status should not be 0
 

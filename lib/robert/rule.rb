@@ -87,34 +87,37 @@ module Robert
       rules.each { |r| add(r) }
     end
 
-    def eval_rule(ctx, eval_ctx)
-      bestm = rules_hash[ctx.last].map { |r| r.match(ctx) && r }.compact.inject do |a,b|
-        ac, bc = a.context, b.context
-        next a if ctx[(-ac.length)..-1] == ac and ctx[(-bc.length)..-1] != bc and (!a.match(bc))
-        next b if ctx[(-ac.length)..-1] != ac and ctx[(-bc.length)..-1] == bc and (!b.match(ac))
+    def eval_rule_steps(ctx)
+      step1 = rules_hash[ctx.last].map { |r| r.match(ctx) && r }.compact.select { |r| r.overriden_by.nil? }
+      if step1.empty?
+        err_msg = "no suitable rule found: #{ctx.join(',')}"
+        err_msg += " (#{$!})" if $!
+        raise NoSuitableRuleFoundError, err_msg
+      end
+      
+      rules_with_ctx_first_token = step1.select { |r| r.context.first == ctx.first }
+      step2 = rules_with_ctx_first_token.empty? ? step1 : rules_with_ctx_first_token
 
-        if ac.first != bc.first
-          next a if ac.first == ctx.first
-          next b if bc.first == ctx.first
-        end
-        
+      step3 = step2.inject do |a,b|
+        ac, bc = a.context, b.context
         raise "internal logic error: rules should be different #{ac.join(",")} #{bc.join(",")}" if ac == bc
+
         diff_elm = [ac.length, bc.length].max.times do |i|
           break i if ac[ac.length - i - 1] != bc[bc.length - i - 1]
         end
         if ac[diff_elm] && bc[diff_elm]
           ctx.rindex(bc[bc.length - diff_elm - 1]) > ctx.rindex(ac[ac.length - diff_elm - 1]) ? b : a
         else
-          ac.length > bc.length ? a : b
+          raise "can't find different elements for rules: #{ac.join(',')} and #{bc.join(',')}"
         end
       end
 
-      unless bestm
-        err_msg = "no suitable rule found: #{ctx.join(',')}"
-        err_msg += " (#{$!})" if $!
-        raise NoSuitableRuleFoundError, err_msg
-      end
-      bestm.value.respond_to?(:call) ? eval_ctx.instance_exec(&bestm.value) : bestm.value
+      [step1, step2, step3]
+    end
+
+    def eval_rule(ctx, eval_ctx)
+      match_rule = eval_rule_steps(ctx)[2]
+      match_rule.value.respond_to?(:call) ? eval_ctx.instance_exec(&match_rule.value) : match_rule.value
     end
   end
 

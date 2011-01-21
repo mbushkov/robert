@@ -1,4 +1,3 @@
-@dev
 Feature: rules can be evaluated
   As a rob user
   In order to get access to particular configuration values
@@ -35,7 +34,7 @@ Feature: rules can be evaluated
     When I run "rob2 test"
     Then the output should contain "42"
 
-  Scenario: rules can be evaluated inside other rules
+  Scenario: rules can be evaluated inside other rules if they're set with block or a lambda
     Given a Robert configuration with:
     """
     var[:my,:rule] = 42
