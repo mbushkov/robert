@@ -282,6 +282,11 @@ module Robert
   #  act[:act_name] = seq(deploy.remote { var[:rule] = 42 },
   #                       nsub(:distinct_name, check.is_running))
   module ActsContainer
+    def ctx_counter_inc
+      @counter ||= 0
+      @counter += 1
+    end
+    
     def acts
       @acts ||= {}
     end
@@ -344,7 +349,7 @@ module Robert
     # * set next_acts to the result of "backup.mysql" evaluation
     # * evaluate "onfail.continue" action with the given arguments
     def fn_act(full_name, *next_acts, &block)
-      counter =  $top.ctx_counter_inc
+      counter =  ctx_counter_inc
       next_acts = next_acts.compact
       lambda do |ctx, *args|
         ctx.with_rule_ctx([full_name.to_s.split(/\./).map { |s| s.to_sym }, counter].flatten).
@@ -373,7 +378,7 @@ module Robert
     # all defined acts with this context. Only the needed act will really perform in this case - please
     # see NSubContext for details.
     def nsub(name, nested_fn, &block)
-      counter = $top.ctx_counter_inc
+      counter = ctx_counter_inc
       
       class << self; self; end.class_eval do
         define_method name do

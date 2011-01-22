@@ -50,10 +50,11 @@ module Robert
 
     def use(*exts)
       used_extensions.concat(exts.map { |ename| ename.to_sym })
+      exts.each { |ename| extend(extensions.fetch(ename)) }
     end
 
     def apply_extensions(extensions)
-      used_extensions.each { |ename| extend(extensions.fetch(ename)) }
+#      used_extensions.each { |ename| extend(extensions.fetch(ename)) }
     end
   end
 end

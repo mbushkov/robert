@@ -6,8 +6,6 @@ ext :log do
   var[:log,:level,:error] = LOG_LEVEL_ERROR = 1
   var[:log,:level,:fatal] = LOG_LEVEL_FATAL = 0
 
-  var[:log,:level] = LOG_LEVEL_TRACE
-
   def log(level, message = nil, &block)
     raise ArgumentError, "either string or block should be provided" if message && block
     if level <= log_level
@@ -48,6 +46,7 @@ ext :log do
   end
 end
 
+var[:log,:level] = 5
 conf :base do
   use :log
 end

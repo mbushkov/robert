@@ -108,7 +108,7 @@ module Robert
         if ac[diff_elm] && bc[diff_elm]
           ctx.rindex(bc[bc.length - diff_elm - 1]) > ctx.rindex(ac[ac.length - diff_elm - 1]) ? b : a
         else
-          raise "can't find different elements for rules: #{ac.join(',')} and #{bc.join(',')}"
+          b
         end
       end
 
@@ -274,9 +274,13 @@ module Robert
       def [](*ctx)
         @get_rule.call(ctx)
       end
+
+      def []=(*ctx,value)
+      end
     end
     
     def var(*args)
+      return if block_given?
       if args.empty?
         RuleId.new do |ctx|
           rules.eval_rule((@rule_ctx_override || rule_ctx) + ctx, self)

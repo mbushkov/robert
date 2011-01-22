@@ -28,7 +28,6 @@ module Robert
 
         load_files(CORE_ADDONS_PATH)        
         $top.include(:base) #have to include it explicitly, as base is created and configured after the $top
-        $top.process_rules_and_extensions
 
         ignore_global, ignore_user = ENV['ROB_IGNORE_GLOBAL_CONFIGURATION_PATHS'], ENV['ROB_IGNORE_USER_CONFIGURATION_PATHS']
 
@@ -38,10 +37,9 @@ module Robert
         load_files(USER_CONFIGURATIONS_PATH) unless ignore_user
         $top.load(TOP_GLOBAL_CONFIGURATION_PATH) unless ignore_global or !File.exists?(TOP_GLOBAL_CONFIGURATION_PATH)
         $top.load(TOP_USER_CONFIGURATION_PATH) unless ignore_user or !File.exists?(TOP_USER_CONFIGURATION_PATH)
-        $top.process_rules_and_extensions
 
-        $top.confs($top.confs_names, :without_name => :base_after) { include :base_after } if $top.conf?(:base_after)
-        $top.process_rules_and_extensions
+        $top.select { without_name(:base_after) && without_name(:base) }.each_conf { include :base_after } if $top.conf?(:base_after)
+        $top.process_rules
         
         $top.logd "all rules and extensions were processed"
 

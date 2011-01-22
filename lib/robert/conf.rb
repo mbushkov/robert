@@ -177,6 +177,23 @@ module Robert
     end
   end
 
+  class ConfigurationDescriptor
+    attr_reader :conf_name
+
+    def initialize(conf_name)
+      @conf_name = conf_name
+      @conf_blocks = []
+    end
+
+    def add_conf_block(&block)
+      @conf_blocks << block
+    end
+
+    def apply_conf_blocks(dest)
+      @conf_blocks.each { |cb| dest.instance_eval(&cb) }
+    end
+  end
+
   # Configuration is the basic entity in Robert. It is configured with acts, rules and extensions.
   # Contexts of rules defined inside the configuration are affected - they're prepended with
   # configuration name. Example:
@@ -203,25 +220,8 @@ module Robert
       @tags = Set.new
     end
 
-    def include_conf(conf)
-      conf.conf_blocks.each { |blk| apply_conf_block(&blk) }
-    end
-
     def include(*names)
-      names.each {|name| include_conf($top.conf(name)) }
-    end
-
-    def apply_conf_block(&block)
-      @no_recursive_add ||= 0
-      if @no_recursive_add == 0
-        @conf_blocks << block
-      end
-      @no_recursive_add += 1
-      begin
-        instance_eval(&block)
-      ensure
-        @no_recursive_add -= 1
-      end
+      names.each {|name| $top.conf(name).apply_conf_blocks(self) }
     end
 
     def actions
@@ -248,14 +248,32 @@ module Robert
   # collection of configurations. Single configurations are defined with "conf" call. Batch operations
   # on configurations are performed with "confs" call. Groups of configurations are selected with "select".
   module ConfigurationsContainer
-    def cclone(conf_name)
+    def cclone(conf_name, &block)
+      cs = conf_name.to_sym
       rs = rules
-      confs_hash.fetch(conf_name.to_sym).clone.extend(Module.new.module_eval {
+      es = extensions
+      
+      conf = Configuration.new(cs)
+      conf.extend(Module.new.module_eval {
+        define_method :extensions do
+          es
+        end
+        self
+      })
+
+      conf.instance_eval(&block) if block
+      confs_hash.fetch(conf_name.to_sym).apply_conf_blocks(conf)
+
+      class << conf
+        alias_method :orig_rules, :rules
+      end
+      conf.extend(Module.new.module_eval {
         define_method :rules do
           rs
         end
         self
       })
+      conf
     end
 
     def confs_names
@@ -264,7 +282,7 @@ module Robert
 
     def conf(conf_name, &block)
       if block
-        confs_hash[conf_name.to_sym].apply_conf_block(&block)
+        confs_hash[conf_name.to_sym].add_conf_block(&block)
       else
         raise "no configuration for name '#{conf_name}'" unless confs_hash.key?(conf_name.to_sym)
         confs_hash[conf_name.to_sym]
@@ -283,22 +301,21 @@ module Robert
         names = names.first
       end
 
-      sel_confs = names.map { |name| confs_hash[name.to_sym] }.select do |conf|
+      sel_confs = names.map { |name| confs_hash[name.to_sym]; cclone(name.to_sym) }.select do |conf|
         ConfigurationSelector.new(conf).with_options(options)
       end
 
       if block
-        sel_confs.each { |conf| conf.apply_conf_block(&block) }
+        sel_confs.each { |conf_obj| conf(conf_obj.conf_name, &block) }
       end
       sel_confs
     end
 
     def select(&block)
-      result = confs_hash.values.select { |conf| ConfigurationSelector.new(conf).instance_eval(&block) }.
-        map { |conf| cclone(conf.conf_name) }
-        
+      result = confs_hash.keys.map { |conf_name| cclone(conf_name) }.select { |conf| ConfigurationSelector.new(conf).instance_eval(&block) }
+
       def result.each_conf(&block)
-        each { |conf| conf.instance_eval(&block) }
+        each { |conf_obj| $top.conf(conf_obj.conf_name, &block) }
       end
       result
     end
@@ -306,8 +323,12 @@ module Robert
     private
     def confs_hash
       @configurations ||= Hash.new do |h,k|
-        new_conf = Configuration.new(k.to_sym, self, [k.to_sym])
-        new_conf.include(:base) if conf?(:base)
+        new_conf = ConfigurationDescriptor.new(k.to_sym)
+        unless k.to_sym == :base
+          new_conf.add_conf_block do
+            include(:base) if $top.conf?(:base)
+          end
+        end
         h[k.to_sym] = new_conf
       end
     end
