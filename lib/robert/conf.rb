@@ -41,7 +41,7 @@ module Robert
     end
 
     def with_var(*var_ctx)
-      @conf.rules.find { |r| r.match([@conf.conf_name] + var_ctx) }
+      @conf.orig_rules.find { |r| r.match([@conf.conf_name] + var_ctx) }
     end
 
     def with_options(options)
@@ -142,7 +142,7 @@ module Robert
     end
 
     def confs_names
-      cd_hash.keys.to_set
+      cd_hash.keys.to_set - [:base, :base_after]
     end
 
     def conf(conf_name, &block)
@@ -173,7 +173,7 @@ module Robert
       end.select do |conf|
         ConfigurationSelector.new(conf).with_options(options)
       end
-    
+
       sel_confs.each { |conf_clone| conf(conf_clone.conf_name, &block) }
       nil
     end

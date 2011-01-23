@@ -1,3 +1,7 @@
+Then /^the output should not match \/([^\/]*)\/$/ do |partial_output|
+  all_output.should_not =~ /#{partial_output}/
+end
+
 Given /^a [Rr]obert configuration with:$/ do |string|
   Given %Q{a directory named ".robert/conf"}
   Given %Q{a file named ".robert/conf/cuke.rb" with:}, string
