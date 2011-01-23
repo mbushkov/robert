@@ -38,14 +38,14 @@ module Robert
       actions.each { |k,v| rules.add_all(v.rules) }
       extensions.each { |k,v| rules.add_all(v.rules) }
 
-      confs_hash.each do |ck,cv|
-        c = cclone(ck) { |conf| conf.extend(RulesDefiner) }
+      confs_names.each do |conf_name|
+        conf_clone = cclone(conf_name)
 
-        c.acts.each do |k,v|
-          ctx = RulesDefinitionContext.new([ck.to_sym], rules)
+        rules.add_all(conf_clone.orig_rules)
+        conf_clone.acts.each do |k,v|
+          ctx = RulesDefinitionContext.new([conf_name], rules)
           v.call(ctx)
         end
-        rules.add_all(c.orig_rules)
       end
     end
   end

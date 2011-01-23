@@ -51,132 +51,6 @@ module Robert
     end
   end
 
-  describe ConfigurationSelector, "with_tags" do
-    before do
-      @conf = flexmock(:tags => [:pretty, :awesome])
-      @sel = ConfigurationSelector.new(@conf)
-    end
-    
-    it "returns true if all specified tags are present in configuration" do
-      @sel.with_tags(:pretty).should be_true
-      @sel.with_tags(:awesome).should be_true
-      @sel.with_tags(:pretty, :awesome).should be_true
-    end
-
-    it "returns false if at least one tag is not present in configuration" do
-      @sel.with_tags(:ugly).should be_false
-      @sel.with_tags(:pretty, :ugly).should be_false
-      @sel.with_tags(:awesome, :ugly).should be_false
-      @sel.with_tags(:pretty, :awesome, :ugly).should be_false
-    end
-  end
-
-  describe ConfigurationSelector, "without_tags" do
-    before do
-      @conf = flexmock(:tags => [:pretty, :awesome])
-      @sel = ConfigurationSelector.new(@conf)
-    end
-
-    it "returns true if none of the specified tags are present in configuration" do
-      @sel.without_tags(:ugly).should be_true
-      @sel.without_tags(:ugly, :duckling).should be_true
-    end
-    
-    it "returns false if any of the specified tags are present in configuration" do
-      @sel.without_tags(:pretty).should be_false
-      @sel.without_tags(:awesome).should be_false
-      @sel.without_tags(:pretty, :awesome).should be_false
-      @sel.without_tags(:pretty, :ugly).should be_false
-      @sel.without_tags(:awesome, :ugly).should be_false
-    end
-  end
-
-  describe ConfigurationSelector, "with_any_tag" do
-    before do
-      @conf = flexmock(:tags => [:pretty, :awesome])
-      @sel = ConfigurationSelector.new(@conf)
-    end
-
-    it "returns true if any of the specified tags are present in configuration" do
-      @sel.with_any_tag(:pretty).should be_true
-      @sel.with_any_tag(:awesome).should be_true
-      @sel.with_any_tag(:pretty, :awesome).should be_true
-      @sel.with_any_tag(:pretty, :ugly).should be_true
-      @sel.with_any_tag(:awesome, :ugly).should be_true
-    end
-
-    it "returns false if none of the specified tags are present in configuration" do
-      @sel.with_any_tag(:ugly).should be_false
-      @sel.with_any_tag(:duckling).should be_false
-      @sel.with_any_tag(:ugly, :duckling).should be_false
-    end
-  end
-
-  describe ConfigurationSelector, "with_method" do
-    before do
-      @conf = flexmock(:some_method => 42)
-      @sel = ConfigurationSelector.new(@conf)
-    end
-
-    it "returns true when method is present" do
-      @sel.with_method(:some_method).should be_true
-    end
-
-    it "returns false when method is not present" do
-      @sel.with_method(:another_method).should be_false
-    end
-  end
-
-  describe ConfigurationSelector, "with_var" do
-    before do
-      @conf = flexmock(:rules => [Rule.new([:a,:b,:c], 42),
-                                  Rule.new([:some_conf,:x,:y,:z], 43)],
-                       :conf_name => :some_conf)
-      @sel = ConfigurationSelector.new(@conf)
-    end
-
-    it "returns true if there's a var with a matching context" do
-      @sel.with_var(:a, :b, :c).should be_true
-      @sel.with_var(:prea, :a, :b, :c).should be_true
-    end
-
-    it "returns false if there's no var with a matching context" do
-      @sel.with_var(:b, :c).should be_false
-      @sel.with_var(:a, :c).should be_false
-      @sel.with_var(:a, :b, :c, :x, :y, :z, :some).should be_false
-    end
-
-    it "prepends configuration name to context used to match rules" do
-      @sel.with_var(:x,:y,:z).should be_true
-    end
-  end
-
-  describe ConfigurationSelector, "with_options" do
-    before do
-      @conf = flexmock
-      @sel = flexmock(ConfigurationSelector.new(@conf))
-    end
-
-    it "treats supplied options hash as a series of checks" do
-      @sel.should_receive(:check1).with("string_arg").and_return(true).once
-      @sel.should_receive(:check2).with(:enum_arg1, :enum_arg2).and_return(true).once
-      
-      res = @sel.with_options(:check1 => "string_arg",
-                              :check2 => [:enum_arg1, :enum_arg2])
-      res.should be_true
-    end
-
-    it "fails if any of the checks fails (works like AND predicate)" do
-      # NOTE: check1 will be first during options - that's standard Ruby 1.9 behavior
-      @sel.should_receive(:check1).with("string_arg").and_return(false).once
-      @sel.should_receive(:check2).never
-      
-      res = @sel.with_options(:check1 => "string_arg",
-                              :check2 => [:enum_arg1, :enum_arg2])
-      res.should be_false
-    end
-  end
-
   class ConfigurationDescriptor
     attr_reader :conf_name
 
@@ -221,7 +95,7 @@ module Robert
     end
 
     def include(*names)
-      names.each {|name| $top.conf(name).apply_conf_blocks(self) }
+      names.each {|name| $top.conf_descriptor(name).apply_conf_blocks(self) }
     end
 
     def actions
@@ -232,28 +106,15 @@ module Robert
     attr_reader :conf_blocks
   end
 
-  describe Configuration do
-    before do
-      @conf = Configuration.new(:some_conf)
-    end
-
-    it "prepends conf_name to rules' contexts" do
-      @conf.var[:host,:user] = "admin"
-
-      @conf.rules.first.context.should == [:some_conf,:host,:user]
-    end
-  end
-
   # ConfigurationsContainer should be mixed into class which should be able to define and handle
   # collection of configurations. Single configurations are defined with "conf" call. Batch operations
   # on configurations are performed with "confs" call. Groups of configurations are selected with "select".
   module ConfigurationsContainer
     def cclone(conf_name, &block)
       cs = conf_name.to_sym
-      rs = rules
-      es = extensions
-      
       conf = Configuration.new(cs)
+
+      es = extensions
       conf.extend(Module.new.module_eval {
         define_method :extensions do
           es
@@ -261,39 +122,44 @@ module Robert
         self
       })
 
-      conf.instance_eval(&block) if block
-      confs_hash.fetch(conf_name.to_sym).apply_conf_blocks(conf)
-
+      unless cs == :base or cs == :base_after
+        conf.instance_eval(&block) if block
+        conf_descriptor(cs).apply_conf_blocks(conf)
+        conf_descriptor(:base_after).apply_conf_blocks(conf) if conf?(:base_after) && cs != :base && cs != :base_after
+      end
+        
+      conf.extend(RulesEvaluator)
       class << conf
         alias_method :orig_rules, :rules
       end
+      rs = rules
       conf.extend(Module.new.module_eval {
         define_method :rules do
           rs
         end
         self
       })
-      conf
     end
 
     def confs_names
-      confs_hash.keys.to_set
+      cd_hash.keys.to_set
     end
 
     def conf(conf_name, &block)
-      if block
-        confs_hash[conf_name.to_sym].add_conf_block(&block)
-      else
-        raise "no configuration for name '#{conf_name}'" unless confs_hash.key?(conf_name.to_sym)
-        confs_hash[conf_name.to_sym]
-      end
+      cd_hash[conf_name.to_sym].add_conf_block(&block)
+    end
+    
+    def conf_descriptor(name)
+      raise "no configuration for name '#{conf_name}'" unless cd_hash.key?(name.to_sym)
+      cd_hash[name.to_sym]
     end
 
     def conf?(conf_name)
-      confs_hash.key?(conf_name.to_sym)
+      cd_hash.key?(conf_name.to_sym)
     end
-
+    
     def confs(*names, &block)
+      raise ArgumentError, "no block given" unless block
       raise ArgumentError, "at least one configuration name was expected" if names.empty?
       options = names.last.respond_to?(:keys) ? names.pop : {}
 
@@ -301,95 +167,36 @@ module Robert
         names = names.first
       end
 
-      sel_confs = names.map { |name| confs_hash[name.to_sym]; cclone(name.to_sym) }.select do |conf|
+      sel_confs = names.map do |name|
+        cd_hash[name.to_sym]
+        cclone(name.to_sym)
+      end.select do |conf|
         ConfigurationSelector.new(conf).with_options(options)
       end
-
-      if block
-        sel_confs.each { |conf_obj| conf(conf_obj.conf_name, &block) }
-      end
-      sel_confs
+    
+      sel_confs.each { |conf_clone| conf(conf_clone.conf_name, &block) }
+      nil
     end
 
     def select(&block)
-      result = confs_hash.keys.map { |conf_name| cclone(conf_name) }.select { |conf| ConfigurationSelector.new(conf).instance_eval(&block) }
-
-      def result.each_conf(&block)
-        each { |conf_obj| $top.conf(conf_obj.conf_name, &block) }
+      result = confs_names.map { |conf_name| cclone(conf_name) }.select { |conf| ConfigurationSelector.new(conf).instance_eval(&block) }
+      def result.names
+        map { |conf| conf.conf_name }
       end
       result
     end
 
     private
-    def confs_hash
-      @configurations ||= Hash.new do |h,k|
-        new_conf = ConfigurationDescriptor.new(k.to_sym)
-        unless k.to_sym == :base
-          new_conf.add_conf_block do
+    def cd_hash
+      @cd_hash ||= Hash.new do |h,k|
+        new_cd = ConfigurationDescriptor.new(k.to_sym)
+        unless k.to_sym == :base || k.to_sym == :base_after
+          new_cd.add_conf_block do
             include(:base) if $top.conf?(:base)
           end
         end
-        h[k.to_sym] = new_conf
+        h[k.to_sym] = new_cd
       end
-    end
-  end
-
-  describe ConfigurationsContainer do
-    before do
-      @cc = flexmock(Object.new.extend(ConfigurationsContainer))
-    end
-
-    it "defines new configuration with a .conf call and a block" do
-      @cc.conf(:new_conf) {}
-
-      @cc.confs_names.should include(:new_conf)
-    end
-
-    it "accesses previously defined configuration with .conf call without a block" do
-      @cc.conf(:new_conf) do
-      end
-
-      @cc.conf(:new_conf).should_not be_nil
-    end
-
-    it "raises when trying to get undefined configuration wuth .conf call" do
-      ->{ @cc.conf(:new_conf) }.should raise_exception
-    end
-
-    it "allows to configure multiple configurations at once with .confs call and a block" do
-      @cc.confs(:some_conf1, :some_conf2) {}
-
-      @cc.confs_names.should include(:some_conf1)
-      @cc.confs_names.should include(:some_conf2)
-    end
-
-    it "allows to use options to filter configurations to be configured in .confs call" do
-      @cc.conf(:conf1) { tags << :conf1 }
-      @cc.conf(:conf2) { tags << :conf2 }
-
-      @cc.should_receive(:conf_called).with(:conf1).once
-      @cc.should_receive(:conf_called).with(:conf2)
-
-      cc = @cc
-      @cc.confs(@cc.confs_names, :with_tags => :conf1) do
-        cc.conf_called(conf_name)
-      end
-    end
-
-    it "returns enumerable from .confs call if no block is supplied" do
-      @cc.conf(:conf1) { tags << :conf1 }
-      @cc.conf(:conf2) { tags << :conf2 }
-
-      @cc.confs(:conf1, :conf2).should == [@cc.conf(:conf1), @cc.conf(:conf2)]
-    end
-
-    it "selects configurations with .select and adds each_conf helper method to resulting enumerable" do
-      @cc.conf(:conf1) {}
-
-      @cc.should_receive(:conf_iterated).once
-      
-      cc = @cc
-      @cc.select { true }.each_conf { cc.conf_iterated }
     end
   end
 end

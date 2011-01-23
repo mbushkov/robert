@@ -1,3 +1,5 @@
-Spec::Runner.configure do |config|
-  config.mock_with :flexmock
+$: << File.join(File.dirname(__FILE__), "..", "lib")
+
+RSpec.configure do |config|
+  config.mock_framework = :flexmock
 end
