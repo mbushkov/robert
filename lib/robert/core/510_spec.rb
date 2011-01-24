@@ -18,6 +18,7 @@ defn cli.spec do
             end
             
             define_method :call do |*args|
+              extend(::Robert::RulesEvaluator)
               instance_exec(*args, &action.body)
             end
           end
@@ -30,13 +31,16 @@ defn cli.spec do
   
   body { |spec_example_group = _spec_example_group|
     mock_framework = var[:cli,:spec,:mock,:framework]
+    names = var?[:cmdline,:names]
+
+    actions = names ? names.map { |n| $top.actions.fetch(n) } : $top.actions.values
     
     RSpec::Core::Runner.disable_autorun!
     RSpec.configure do |config|
       config.mock_framework = mock_framework
     end
     logd "using mock framework: #{mock_framework}"
-    $top.actions.values.map { |action| spec_example_group.call(action) } # groups will be added by side-effects
+    actions.map { |action| spec_example_group.call(action) } # groups will be added by side-effects
     RSpec::Core::CommandLine.new([]).run($stderr, $stdout)
   }
 end
