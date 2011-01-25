@@ -41,12 +41,11 @@ ext :log do
     begin
       $top.rules.eval_rule(rule_ctx + [:cmdline,:args,:log,:level], self)
     rescue RuleStorage::NoSuitableRuleFoundError
-      $top.rules.eval_rule(rule_ctx + [:log,:level], self)
+      LOG_LEVEL_DEBUG
     end
   end
 end
 
-var[:log,:level] = 5
 conf :base do
   use :log
 end

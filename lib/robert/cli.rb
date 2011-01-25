@@ -7,6 +7,7 @@ module Robert
   
   class CLI
     CORE_ADDONS_PATH = "#{File.dirname __FILE__}/core"
+    CONTRIB_ADDONS_PATH= "#{File.dirname __FILE__}/contrib"
     
     TOP_GLOBAL_CONFIGURATION_PATH = "/etc/robert2.rb"
     GLOBAL_EXTENSIONS_PATH = "/usr/local/robert2/ext"
@@ -23,10 +24,11 @@ module Robert
       end
 
       begin
-        parsed = parse_args(argv.dup, env.dup)
-        args_to_rules(parsed, $top)
+        parsed = CLI.parse_args(argv.dup, env.dup)
+        CLI.args_to_rules(parsed, $top)
 
-        load_files(CORE_ADDONS_PATH)        
+        load_files(CORE_ADDONS_PATH)
+        load_files(CONTRIB_ADDONS_PATH)
         $top.include(:base) #have to include it explicitly, as base is created and configured after the $top
 
         ignore_global, ignore_user = ENV['ROB_IGNORE_GLOBAL_CONFIGURATION_PATHS'], ENV['ROB_IGNORE_USER_CONFIGURATION_PATHS']
@@ -64,8 +66,7 @@ module Robert
       end
     end
 
-    private
-    def parse_args(argv, env)
+    def self.parse_args(argv, env)
       command = argv[0]
 
       vars = {}
@@ -89,7 +90,7 @@ module Robert
        :vars => vars}
     end
 
-    def args_to_rules(parsed_args, conf)
+    def self.args_to_rules(parsed_args, conf)
       conf.var[:cmdline,:cmd] = parsed_args[:command]
       parsed_args[:vars].each_with_index do |v, i|
         conf.var[:cmdline,:args,i] = v
@@ -101,6 +102,7 @@ module Robert
       end
     end
 
+    private
     def load_files(path)
       if File.directory?(path)
         Dir["#{path}/*.rb"].sort.each { |fp| $top.load(fp) }
