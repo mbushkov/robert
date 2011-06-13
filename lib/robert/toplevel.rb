@@ -43,7 +43,7 @@ module Robert
 
         rules.add_all(conf_clone.orig_rules)
         conf_clone.acts.each do |k,v|
-          ctx = RulesDefinitionContext.new([conf_name], rules)
+          ctx = RulesDefinitionContext.new([conf_name,k], rules)
           v.call(ctx)
         end
       end

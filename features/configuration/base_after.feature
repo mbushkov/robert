@@ -28,7 +28,7 @@ Feature: base_after configuration is included automatically in every defined con
     end
     """
     When I run "rob2 dump rules"
-    Then the output should contain "my_conf,my,rule -> 42"
+    Then the output should contain "my_conf,*,my,rule -> 42"
 
   @announce
   Scenario: base configuration is included into the new configuration after everything else (need to define act[:test] = dummy.dummy in base in order to be able to reference act[:test] in base_after)

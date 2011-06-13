@@ -74,8 +74,8 @@ Feature: configurations can be defined
     end
     """
     When I run "rob2 dump rules"
-    Then the output should contain "my_conf2,some,rule -> 42"
-    And the output should contain "my_conf1,some,rule -> 42"
+    Then the output should contain "my_conf2,*,some,rule -> 42"
+    And the output should contain "my_conf1,*,some,rule -> 42"
 
   Scenario: configurations can't be defined at runtime (i.e. - inside actions)
     Given a Robert configuration with:

@@ -194,10 +194,10 @@ module Robert
   #  act[:act_name] = seq(deploy.remote { var[:rule] = 42 },
   #                       nsub(:distinct_name, check.is_running))
   module ActsContainer
-    def ctx_counter_inc
-      @counter ||= 0
-      @counter += 1
-    end
+    # def ctx_counter_inc
+    #   @counter ||= 0
+    #   @counter += 1
+    # end
     
     def acts
       @acts ||= {}
@@ -212,7 +212,7 @@ module Robert
           define_method(cat) do |*args|
             # we can treat this call as execution call only if we're outside of act[]= contruction
             if mm_as_act == 0
-              acts[cat].call(ExecutionContext.new([conf_name]), *args)
+              acts[cat].call(ExecutionContext.new([conf_name, cat]), *args)
             else
               method_missing(cat, *args)
             end
@@ -261,10 +261,10 @@ module Robert
     # * set next_acts to the result of "backup.mysql" evaluation
     # * evaluate "onfail.continue" action with the given arguments
     def fn_act(full_name, *next_acts, &block)
-      counter =  ctx_counter_inc
+#      counter =  ctx_counter_inc
       next_acts = next_acts.compact
       lambda do |ctx, *args|
-        ctx.with_rule_ctx([full_name.to_s.split(/\./).map { |s| s.to_sym }, counter].flatten).
+        ctx.with_rule_ctx([full_name.to_s.split(/\./).map { |s| s.to_sym }].flatten).
           with_rules(&block).
           with_next_acts(next_acts.size > 1 ? [seq(*next_acts)] : next_acts).
           perform(self) { |s| s.instance_exec(*args, &actions.fetch(full_name).body) }
@@ -275,7 +275,9 @@ module Robert
     # combined with +, if possible
     def seq(*args, &block)
       lambda do |ctx, *fargs|
-        args.map { |arg| arg.call(ctx, *fargs) }.compact.inject { |arg, memo| memo.respond_to?(:+) ? arg + memo : nil }
+        index = 0
+        index_inc = lambda { i = index; index += 1; i }
+        args.map { |arg| arg.call(ctx.with_rule_ctx([:seq, index_inc.call]), *fargs) }.compact.inject { |arg, memo| memo.respond_to?(:+) ? arg + memo : nil }
       end
     end
 
@@ -290,18 +292,18 @@ module Robert
     # all defined acts with this context. Only the needed act will really perform in this case - please
     # see NSubContext for details.
     def nsub(name, nested_fn, &block)
-      counter = ctx_counter_inc
+#      counter = ctx_counter_inc
       
       class << self; self; end.class_eval do
         define_method name do
           acts.each do |k,v|
-            v.call(NSubContext.new([conf_name], [name.to_sym, counter]))
+            v.call(NSubContext.new([conf_name], [name.to_sym]))
           end
         end
       end
          
       lambda do |ctx, *args|
-        nested_fn.call(ctx.with_rule_ctx([name.to_sym, counter]).with_rules(&block), *args)
+        nested_fn.call(ctx.with_rule_ctx([name.to_sym]).with_rules(&block), *args)
       end
     end
 

@@ -27,7 +27,7 @@ Feature: base configuration is included automatically in every newly defined con
     end
     """
     When I run "rob2 dump rules"
-    Then the output should contain "my_conf,my,rule -> 42"
+    Then the output should contain "my_conf,*,my,rule -> 42"
 
   Scenario: base configuration is included into the new configuration prior to everything else
     Given a Robert configuration with:

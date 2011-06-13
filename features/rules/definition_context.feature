@@ -12,7 +12,7 @@ Feature: when rules are defined, they're prefixed by current context (which depe
     When I run "rob2 dump rules"
     Then the output should match /^*,my,rule -> 42$/
 
-  Scenario: rule defined inside action is prefixed with action's name's left and right pargs and *
+  Scenario: rule defined inside action is prefixed with *, action's name's left and right parts and
     Given a Robert configuration with:
     """
     defn my.action do
@@ -22,7 +22,7 @@ Feature: when rules are defined, they're prefixed by current context (which depe
     end
     """
     When I run "rob2 dump rules"
-    Then the output should contain "my,action,*,some,rule -> 42"
+    Then the output should contain "*,my,action,some,rule -> 42"
 
   @announce-stdout
   Scenario: rule defined inside the configuration is prefixed with configuration name and *
@@ -36,7 +36,7 @@ Feature: when rules are defined, they're prefixed by current context (which depe
     Then the output should contain "some_conf,*,my,rule -> 42"
 
   @announce-stdout
-  Scenario: rule defined in the block within act[]= assignment is prefixed with: configuration's name, asterisk, action name's left and right parts and arbitrary integer
+  Scenario: rule defined in the block within act[]= assignment is prefixed with: configuration's name, act's name, action name's left and right parts
     Given a Robert configuration with:
     """
     conf :cli do
@@ -44,10 +44,10 @@ Feature: when rules are defined, they're prefixed by current context (which depe
     end
     """
     When I run "rob2 dump rules"
-    Then the output should match /cli,*,console,print,\d+,message -> 42/
+    Then the output should match /cli,test,console,print,message -> 42/
 
   @announce-stdout
-  Scenario: rule defined inside the nested action in act[]= assignment is prefixed with: configuration name, asterisk and, for each action in chain - left and right part and arbirtrary integer
+  Scenario: rule defined inside the nested action in act[]= assignment is prefixed with: configuration name, act name, and for each action in chain - left and right part
     Given a Robert configuration with:
     """
     conf :cli do
@@ -55,5 +55,5 @@ Feature: when rules are defined, they're prefixed by current context (which depe
     end
     """
     When I run "rob2 dump rules"
-    Then the output should match /cli,*,onfail,continue,\d+,console,print,\d+,message -> 42/
+    Then the output should match /cli,test,onfail,continue,console,print,message -> 42/
 

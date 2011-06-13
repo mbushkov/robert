@@ -32,7 +32,7 @@ Feature: configurations are defined and used through top-level object $top, whic
 
     defn my.action do
       body {
-        puts $top.confs_names.join(",")
+        puts $top.confs_names.to_a.join(",")
       }
     end
 

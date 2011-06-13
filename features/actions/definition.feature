@@ -81,7 +81,7 @@ Feature: custom actions can be defined
     When I run "rob2 test"
     Then the output should contain "number is 42"
 
-  Scenario: custom action can have rules defined inside (rules will be prefixed with action name's left and right part)
+  Scenario: custom action can have rules defined inside (rules will be prefixed with * and action name's left and right part)
     Given a Robert configuration with:
     """
     defn my_namespace.action do
@@ -90,5 +90,5 @@ Feature: custom actions can be defined
     end
     """
     When I run "rob2 dump rules"
-    Then the output should contain "my_namespace,action,my,rule -> 42"
+    Then the output should contain "*,my_namespace,action,my,rule -> 42"
 
