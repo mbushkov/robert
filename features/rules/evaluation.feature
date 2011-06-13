@@ -1,3 +1,4 @@
+@dev
 Feature: rules can be evaluated
   As a rob user
   In order to get access to particular configuration values
@@ -50,10 +51,11 @@ Feature: rules can be evaluated
       act[:test] = my.action
     end
     """
+    When I run "rob2 dump rules"
     When I run "rob2 test"
     Then the output should contain "43"
 
-  Scenario: rules can't be evaluated inside configurations' definitions
+  Scenario: rules can't be evaluated outside configurations' definitions
     Given a Robert configuration with:
     """
     var[:my,:rule] = 42
@@ -62,4 +64,3 @@ Feature: rules can be evaluated
     """
     When I run "rob2 dump rules"
     Then the exit status should not be 0
-

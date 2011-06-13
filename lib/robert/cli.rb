@@ -56,7 +56,7 @@ module Robert
         #   raise "unknown name #{unknown_name}"
         # end
 
-        cmd = $top.var[:cmdline,:cmd]
+        cmd = $top.var[:cmdline,:cmd]        
         $top.cclone(:cli).process_cmd(cmd)
       rescue => e
         $stderr.puts "error #{e}: #{e.message}"

@@ -90,7 +90,7 @@ module Robert
     def initialize(conf_name, *args)
       @conf_name = conf_name
       @conf_blocks = []
-      @rule_ctx = [conf_name.to_sym]
+      @rule_ctx = [conf_name.to_sym, :*]
       @tags = Set.new
     end
 

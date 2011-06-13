@@ -25,7 +25,7 @@ module Robert
     end
 
     def rule_ctx
-      []
+      [:*]
     end
 
     def load(_path) # NOTE: using underscore to avoid name clashes, as argument '_path' will be in the binding

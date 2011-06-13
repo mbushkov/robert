@@ -1,3 +1,4 @@
+@dev
 Feature: context for rules evaluation changes during the execution
   As a rob user
   In order to narrow the number of rules that will match my request at the given point of time
@@ -6,7 +7,7 @@ Feature: context for rules evaluation changes during the execution
   Scenario: current rule context acts as a prefix when I want to evaluate particular rule
     Given a Robert configuration with:
     """
-    var[:cli,:my,:action,:value] = 42
+    var[:cli,:*,:my,:action,:*,:value] = 42 #TODO: should be :my,:action,:value
 
     defn my.action do
       body {

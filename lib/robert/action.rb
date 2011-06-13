@@ -83,7 +83,7 @@ module Robert
     end
 
     def defn(id, &block)
-      ab = ActionBuilder.new(id, id.to_s.split(/\./).map { |s| s.to_sym })
+      ab = ActionBuilder.new(id, [:*, id.to_s.split(/\./).map { |s| s.to_sym }, :*].flatten)
       ab.instance_eval(&block)
       actions[id.to_sym] = ab.result_action
     end    

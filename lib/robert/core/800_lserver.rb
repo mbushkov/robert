@@ -48,8 +48,11 @@ defn local_server.single_thread do
   }
 end
 
-defn local_server.thread_pool do
+defn local_server.process_pool do
+  var[:processes,:count] = 4
+  
   body { |serv|
+    pc = var[:processes,:count]
     
   }
 end
@@ -84,7 +87,7 @@ end
 
 conf :local_server do
   act[:run] = local_server.run(local_server.single_thread(local_server.handle_request))
-  act[:run_mt] = local_server.run(local_server.thread_pool(local_server.handle_request))
+  act[:run_m] = local_server.run(local_server.process_pool(local_server.handle_request))
   
   act[:start] = local_server.start
   act[:stop] = local_server.stop

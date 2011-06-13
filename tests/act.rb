@@ -146,21 +146,15 @@ describe ActsContainer do
 
   context "acts execution" do
     before do
-      @prev_top, $top = $top, flexmock(:ctx_counter_inc => 0)
-
       @ctx = flexmock
       @ctx.should_receive(:with_rule_ctx).and_return(@ctx).by_default
       @ctx.should_receive(:with_rules).and_return(@ctx).by_default
       @ctx.should_receive(:with_next_acts).and_return(@ctx).by_default
       @ctx.should_receive(:perform).by_default
 
-      @ac = flexmock(Object.new.extend(ActsContainer))
+      @ac = flexmock(Object.new.extend(ActsContainer), :ctx_counter_inc => 0)
     end
 
-    after do
-      $top = @prev_top
-    end
-    
     it "defined act adds its name and counter to rule_ctx before execution" do
       @ac.instance_eval do
         act[:some_act] = backup.mysql

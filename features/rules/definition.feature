@@ -1,8 +1,11 @@
+@dev
 Feature: rules can have constant values or being evaluated every time they're accessed
   As a rob user
   In order to achieve maximum flexibility when using rules
   I want to set rules values to constants or to blocks of code
 
+  @announce-stdout
+  @announce-stderr
   Scenario: rules can be set to constants
     Given a Robert configuration with:
     """
@@ -65,3 +68,18 @@ Feature: rules can have constant values or being evaluated every time they're ac
     When I run "rob2 dump rules"
     Then the exit status should not be 0
 
+  Scenario: :* can be used when defining rules - it will match any number of tokens
+    Given a Robert configuration with:
+    """
+    var[:my_project,:*,:var] = 42
+    """
+    When I run "rob2 dump rules"
+    Then the output should contain "*,my_project,*,var -> 42"
+
+  Scenario: :* can't be used as last token in rule definition
+    Given a Robert configuration with:
+    """
+    var[:my_project,:*] = 42
+    """
+    When I run "rob2 dump rules"
+    Then the exit status should not be 0

@@ -12,7 +12,6 @@ end
 
 defn cli.pass_cmd_to_confs do
   body {
-
     names = var[:cmdline,:names]
     cmd = var[:cmdline,:cmd]
     
