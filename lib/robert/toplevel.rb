@@ -34,6 +34,10 @@ module Robert
       @loaded_paths << _path
     end
 
+    def fix_unchangeable_rules
+      self.unchangeable_rules = rules.dup
+    end
+
     def process_rules
       actions.each { |k,v| rules.add_all(v.rules) }
       extensions.each { |k,v| rules.add_all(v.rules) }
@@ -47,6 +51,22 @@ module Robert
           v.call(ctx)
         end
       end
+    end
+
+    def adjust(&block)
+      extend(RulesDefiner.dup) #TODO: .dup here is a dirty hack
+      instance_eval(&block)
+      extend(RulesEvaluator.dup)
+
+      rules = unchangeable_rules.dup
+      process_rules
+    end
+
+    private
+    attr_accessor :unchangeable_rules
+
+    def unchangeable_rules
+      @unchangeable_rules ||= []
     end
   end
 
