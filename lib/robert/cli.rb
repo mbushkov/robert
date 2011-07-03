@@ -40,14 +40,16 @@ module Robert
         $top.load(TOP_GLOBAL_CONFIGURATION_PATH) unless ignore_global or !File.exists?(TOP_GLOBAL_CONFIGURATION_PATH)
         $top.load(TOP_USER_CONFIGURATION_PATH) unless ignore_user or !File.exists?(TOP_USER_CONFIGURATION_PATH)
 
+        $top.fix_unchangeable_rules
         $top.process_rules
         $top.extend(RulesEvaluator)
-        def $top.conf(*args)
-          raise "changing configurations at runtime is not allowed"
-        end
-        def $top.confs(*args)
-          raise "changing configurations at runtime is not allowed"
-        end
+        
+        # def $top.conf(*args)
+        #   raise "changing configurations at runtime is not allowed"
+        # end
+        # def $top.confs(*args)
+        #   raise "changing configurations at runtime is not allowed"
+        # end
         
         $top.logd "all rules and extensions were processed"
 
