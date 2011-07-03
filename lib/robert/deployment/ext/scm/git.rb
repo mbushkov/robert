@@ -2,7 +2,7 @@ require 'date'
 require 'fileutils'
 
 var[:git,:command] = "git"
-var[:git,:repository,:branch] = "master"
+var[:git,:repository,:branch] = "remotes/origin/HEAD"
 var[:rsync,:command] = "rsync"
 
 GitRevision = Struct.new(:time, :revision_hash)
@@ -56,7 +56,7 @@ end
 defn git.query_revision do
   body { |revision|
     Dir.chdir(var[:git,:repository,:local,:path]) do
-      rev_info = syscmd_output("#{var[:git,:command]} log -n 1 --pretty=format:%at,%H '#{revision}'").split(",")      
+      rev_info = syscmd_output("#{var[:git,:command]} log -n 1 --pretty=format:%at,%H '#{revision}' -- #{var[:git,:repository,:path]}").split(",")      
       GitRevision.new(rev_info[0].to_i, rev_info[1])
     end
   }
