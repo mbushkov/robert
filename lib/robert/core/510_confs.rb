@@ -5,6 +5,9 @@ defn "confs.dump" do
     $top.confs_names.sort.each do |cname|
       conf = $top.cclone(cname)
       puts "== #{cname}, tags: #{conf.tags.to_a.sort.join(",")}"
+      conf.acts.each do |act_name,act|
+        puts "  #{act_name}:"
+      end
     end
   }
 end
@@ -12,4 +15,3 @@ end
 conf :confs do
   act[:dump] = act[:list] = confs.dump
 end
-
