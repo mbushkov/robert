@@ -5,9 +5,10 @@ require 'robert/deployment/core/deployment_list'
 conf :deployable do
   tags << :deployable
 
-  var[:local,:build,:misc] = "/usr/local/robert2/misc"
-  var[:local,:build,:repository] = "/usr/local/robert2/build"
-  var[:remote,:deployment,:repository] = "/usr/local/robert2/dep"
+  var[:local,:robert,:root] = var[:remote,:robert,:root] = "/usr/local/robert2"
+  var[:local,:build,:misc] = ->{ "#{var[:local,:robert,:root]}/misc" }
+  var[:local,:build,:repository] = -> { "#{var[:local,:robert,:root]}/build" }
+  var[:remote,:deployment,:repository] = ->{ "#{var[:remote,:robert,:root]}/dep" }
 
   def area
     @area ||= Robert::Deployment::Area.find_or_create_by_name(var[:deployment,:area])

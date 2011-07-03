@@ -18,7 +18,7 @@ end
 
 defn subversion.query_revision do
   body { |revision|
-    syscmd_output(scm_obj.query_revision(revision, &call_cmd))
+    scm_obj.query_revision(revision) { |cmd| syscmd_output(cmd) }
   }
 end
 

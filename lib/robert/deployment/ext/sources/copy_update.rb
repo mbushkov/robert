@@ -3,7 +3,7 @@ require 'fileutils'
 defn sources.copy_update do
   body {
     build_repository.setup!
-    rev = build_repository.revisions.select { |r| build_repository[r].checked_out }.sort { |r1, r2| File.new(build_repository[r1].project_root).mtime > File.new(build_repository[r2].project_root).mtime }.first
+    rev = build_repository.revisions.select { |r| r != revision && build_repository[r].checked_out }.sort.last
     if rev == nil
       logi "can't find any suitable revision to update. falling back to fresh checkout"
       call_next # will execute checkout due to the 'use' definition in the beginning
