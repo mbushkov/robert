@@ -70,6 +70,8 @@ defn git.revision_from_str do
 end
 
 conf :git do
+  var[:scm,:name] = "git"
+  
   var[:git,:repository,:safename] = ->{ var[:git,:repository].gsub(/:|\//, "-") }
   var[:git,:repository,:local,:path] = ->{ "#{var[:local,:build,:misc]}/#{var[:git,:repository,:safename]}" }
   

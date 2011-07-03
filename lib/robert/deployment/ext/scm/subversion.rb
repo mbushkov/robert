@@ -1,24 +1,32 @@
+require 'yaml'
+
+var[:subversion,:command] = "svn"
+var[:subversion,:command,:authentication] = ->{ [var?[:subversion,:username], var?[:subversion,:password]].compact.join(" ") }
+
 defn subversion.head do
   body {
-    scm_obj.head
+    "HEAD"
   }
 end
 
 defn subversion.checkout do
   body { |revision, destination|
-    syscmd(scm_obj.checkout(revision, destination))
+    syscmd("#{var[:subversion,:command]} checkout #{var[:subversion,:command,:authentication]} -r#{revision} '#{var[:subversion,:repository]}' '#{destination}'")
   }
 end
 
 defn subversion.sync do
   body { |revision, destination|
-    syscmd(scm_obj.sync(revision, destination))
+    syscmd("#{var[:subversion,:command]} update #{var[:subversion,:command,:authentication]} -r#{revision} '#{destination}'")
   }
 end
 
 defn subversion.query_revision do
   body { |revision|
-    scm_obj.query_revision(revision) { |cmd| syscmd_output(cmd) }
+    info = syscmd_output("#{var[:subversion,:command]} info #{var[:subversion,:repository]} #{var[:subversion,:command,:authentication]} -r#{revision}")
+    yaml = YAML.load(info)
+    raise "got unexpected results when trying to query for revision: #{info}" unless Hash === yaml
+    [(yaml['Last Changed Rev'] || 0).to_i, (yaml['Revision'] || 0).to_i ].max
   }
 end
 
@@ -29,7 +37,7 @@ defn subversion.revision_from_str do
 end
 
 conf :subversion do
-  act[:scm_obj] = cap_scm.subversion
+  var[:scm,:name] = "subversion"
   
   act[:scm_head] = subversion.head
   act[:scm_checkout] = subversion.checkout
