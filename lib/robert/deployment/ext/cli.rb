@@ -67,7 +67,8 @@ conf :cli do
                     cli.prepare_build(
                       confs_to_deploy.from_cmdline(
                         confs_to_deploy.local_fresh_only(
-#                          names.order_by_runtime_deps(
-                            cli.deploy)))))
+                          confs_to_deploy.with_runtime_deps(
+                            confs_to_deploy.order_by_runtime_deps(
+                              cli.deploy)))))))
   act[:fast_rollback] = deployment_db.with_connection(deployment_db.migrate(cli.fast_rollback))
 end

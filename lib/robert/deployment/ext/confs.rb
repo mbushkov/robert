@@ -4,7 +4,7 @@ defn confs_to_deploy.from_cmdline do
 
     prev_names = prev_confs.map { |c| c.conf_name }
     next_names = next_confs.map { |c| c.conf_name }
-    logd "name.from_cmdline, prev_names = #{prev_names}, passing further: #{next_names}"
+    logd "confs_to_deploy.from_cmdline, prev_names = #{prev_names}, passing further: #{next_names}"
     
     call_next next_confs
   }
@@ -12,24 +12,39 @@ end
 
 defn confs_to_deploy.with_runtime_deps do
   body { |confs|
-    call_next confs
+    confs_map = confs.inject(Hash.new { |h,k| h[k] = $top.conf?(k) && $top.cclone(k) }) do |memo, conf|
+      memo[conf.conf_name] = conf; memo
+    end
+    
+    getter = lambda do |name|
+      (confs_map[name] || nil) && confs_map[name].runtime_dependencies
+    end
+    
+    prev_names = confs.map { |c| c.conf_name }
+    next_names = Robert::Deployment::DependencyResolver.new(getter).add_required(confs.map { |c| c.conf_name }).to_a
+
+    logd "confs_to_deploy.with_runtime_deps, prev_names = #{prev_names}, passing further: #{next_names}"
+    call_next next_names.map { |n| confs_map[n] || nil }.compact
   }
 end
 
-# defn confs.order_by_runtime_deps do
-#   body { |confs|
-#     getter = lambda do |name|
-#       return nil unless $top.conf?(name)
+defn confs_to_deploy.order_by_runtime_deps do
+  body { |confs|
+    confs_map = confs.inject(Hash.new { |h,k| h[k] = $top.conf?(k) && $top.cclone(k) }) do |memo, conf|
+      memo[conf.conf_name] = conf; memo
+    end
+    
+    getter = lambda do |name|
+      (confs_map[name] || nil) && confs_map[name].runtime_dependencies
+    end
+    
+    prev_names = confs.map { |c| c.conf_name }
+    next_names = Robert::Deployment::DependencyResolver.new(getter).order_by_dependencies(confs.map { |c| c.conf_name }).reverse.to_a
 
-#       conf = confs.find { |c| c.conf_name == name }
-#       conf.runtime_dependencies
-#     end
-
-#     next_names = Robert::Deployment::DependencyResolver.new(getter).order_by_dependencies(confs.map { |c| c.conf_name }).to_a
-#     logd "names.order_by_runtime_deps, prev_names = #{names}, passing further: #{next_names}"
-#     call_next next_names
-#   }
-# end
+    logd "confs_to_deploy.order_by_runtime_deps, prev_names = #{prev_names}, passing further: #{next_names}"
+    call_next next_names.map { |n| confs_map[n] }
+  }
+end
 
 # defn names.remote_fresh_only do
 #   body { |names|
@@ -52,7 +67,7 @@ defn confs_to_deploy.local_fresh_only do
 
     names = confs.map { |c| c.conf_name }
     next_names = next_confs.map { |c| c.conf_name }
-    logd "confs.local_fresh_only, prev_names = #{names}, passing further: #{next_names}"
+    logd "confs_to_deploy.local_fresh_only, prev_names = #{names}, passing further: #{next_names}"
     
     call_next next_confs
   }
