@@ -15,26 +15,24 @@ defn cli.determine_area do
 end
 
 defn cli.deploy do
-  body { |names|
-    dep_confs = $top.select { names.include?(conf.conf_name) }
+  body { |confs|
+    dep_confs = confs
     deps = dep_confs.map do |dc|
       Robert::Deployment::Deployment.new(:name => dc.conf_name, :revision => dc.revision)
     end
 
     area_name = var?[:deployment,:area] || var?[:cmdline,:args,:area] || determine_area(names)
+
     used_configurations = Hash.new do |h,dep|
-      if $top.conf?(dep.name)
-        conf = $top.cclone(dep.name)
-      else
-        $top.conf(dep.name) {}
-        conf = $top.cclone(dep.name)
-        class << conf; self; end.class_eval do
-          define_method :revision do
-            dep.revision
-          end
+      $top.adjust do
+        $top.conf(dep.name) do
+          include "area:#{area_name}"
+          act[:revision] = revision.explicit { var[:revision] = dep.revision }
         end
       end
-      conf.include("area:#{area_name}")
+      
+      conf = $top.cclone(dep.name)
+
       h[dep] = conf
     end
     dep_transaction_getter = lambda { |dep| used_configurations[dep] }
@@ -67,9 +65,9 @@ conf :cli do
   act[:build] = deployment_db.with_connection(
                   deployment_db.migrate(
                     cli.prepare_build(
-                      names.from_cmdline(
-                        names.local_fresh_only(
-                          names.order_by_runtime_deps(
-                            cli.deploy))))))
+                      confs_to_deploy.from_cmdline(
+                        confs_to_deploy.local_fresh_only(
+#                          names.order_by_runtime_deps(
+                            cli.deploy)))))
   act[:fast_rollback] = deployment_db.with_connection(deployment_db.migrate(cli.fast_rollback))
 end

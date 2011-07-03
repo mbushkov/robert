@@ -3,7 +3,7 @@ defn sources.checkout do
     brev = build_repository[revision]
 
     brev.setup!
-    command = scm.checkout(revision, brev.src_path)
+    command = scm_checkout(revision, brev.src_path)
 
     syscmd(command)
 

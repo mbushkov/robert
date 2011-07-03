@@ -30,7 +30,7 @@ defn deployment_db.with_connection do
       @conf.log(severity, str)
     end
   end
-  
+
   body {
     require 'active_record'
     
@@ -68,9 +68,9 @@ defn deployment_db.nuke do
   }
 end
 
+# TODO: looks ugly
+var(:deployment_db,:*,:activerecord,:log,:level) { var[:log,:level,:error] }
 conf :deployment_db do
-  var(:activerecord,:log,:level) { var[:log,:level,:error] }
-
   act[:migrate] = deployment_db.with_connection(deployment_db.migrate)
   act[:nuke] = deployment_db.nuke
 end

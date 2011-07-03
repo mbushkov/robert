@@ -68,15 +68,16 @@ end
 class LocalProjectRepository
   attr_reader :project_name, :build_root, :project_root
 
-  def initialize(project_name, build_root)
+  def initialize(project_name, build_root, revision_from_str)
     @project_name = project_name
     @build_root = build_root
     @project_root = File.join(@build_root, @project_name)
     @revisions = {}
+    @revision_from_str = revision_from_str
   end
 
   def [](real_rev)
-    raise ArgumentError, "revision must be a string" unless real_rev.respond_to?(:length)
+    raise if real_rev === true
     raise ArgumentError, "revision can't be nil" if real_rev.nil?
 
     return @revisions[real_rev] if @revisions.key? real_rev 
@@ -111,7 +112,7 @@ class LocalProjectRepository
   def sync
     revisions.clear
     Dir[File.join(@project_root, "*")].each do |dir|
-      self[File.basename(dir)] if File.directory? dir
+      self[@revision_from_str.call(File.basename(dir))] if File.directory? dir
     end
     self
   end

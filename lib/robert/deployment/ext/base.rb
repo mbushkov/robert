@@ -22,7 +22,9 @@ conf :deployable do
   
   def build_repository
     unless @build_repository
-      @build_repository = Robert::Deployment::LocalProjectRepository.new(conf_name.to_s, var[:local,:build,:repository])
+      @build_repository = Robert::Deployment::LocalProjectRepository.new(conf_name.to_s,
+                                                                         var[:local,:build,:repository],
+                                                                         lambda { |rev_str| self.scm_revision_from_str(rev_str) })
       @build_repository.sync
     end
     @build_repository
@@ -54,6 +56,7 @@ end
 
 conf :base_after do
   if tags.include?(:deployable)
+    act[:revision] = revision.session_one_time(revision.from_str(act[:revision]))
     act[:build] = build.prepare(act[:build])
   end
 end
