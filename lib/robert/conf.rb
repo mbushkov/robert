@@ -146,11 +146,12 @@ module Robert
     end
 
     def conf(conf_name, &block)
+      raise ArgumentError, "no configuration body specified for #{conf_name}" unless block
       cd_hash[conf_name.to_sym].add_conf_block(&block)
     end
     
     def conf_descriptor(name)
-      raise "no configuration for name '#{conf_name}'" unless cd_hash.key?(name.to_sym)
+      raise "no configuration for name '#{name}'" unless cd_hash.key?(name.to_sym)
       cd_hash[name.to_sym]
     end
 
@@ -188,11 +189,12 @@ module Robert
 
     private
     def cd_hash
+      cc = self
       @cd_hash ||= Hash.new do |h,k|
         new_cd = ConfigurationDescriptor.new(k.to_sym)
         unless k.to_sym == :base || k.to_sym == :base_after
           new_cd.add_conf_block do
-            include(:base) if $top.conf?(:base)
+            include(:base) if cc.conf?(:base) #TODO: why top is used here?
           end
         end
         h[k.to_sym] = new_cd
