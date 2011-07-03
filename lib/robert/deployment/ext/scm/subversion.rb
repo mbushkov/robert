@@ -6,19 +6,19 @@ end
 
 defn subversion.checkout do
   body { |revision, destination|
-    scm_obj.checkout(revision, destination)
+    syscmd(scm_obj.checkout(revision, destination))
   }
 end
 
 defn subversion.sync do
   body { |revision, destination|
-    scm_obj.sync(revision, destination)
+    syscmd(scm_obj.sync(revision, destination))
   }
 end
 
 defn subversion.query_revision do
-  body { |revision, call_cmd|
-    scm_obj.query_revision(revision, &call_cmd)
+  body { |revision|
+    syscmd_output(scm_obj.query_revision(revision, &call_cmd))
   }
 end
 

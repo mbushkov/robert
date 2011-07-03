@@ -4,7 +4,8 @@ require 'robert/deployment/core/deployment_list'
 
 conf :deployable do
   tags << :deployable
-  
+
+  var[:local,:build,:misc] = "/usr/local/robert2/misc"
   var[:local,:build,:repository] = "/usr/local/robert2/build"
   var[:remote,:deployment,:repository] = "/usr/local/robert2/dep"
 

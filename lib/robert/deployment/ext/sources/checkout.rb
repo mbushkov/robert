@@ -3,9 +3,7 @@ defn sources.checkout do
     brev = build_repository[revision]
 
     brev.setup!
-    command = scm_checkout(revision, brev.src_path)
-
-    syscmd(command)
+    scm_checkout(revision, brev.src_path)
 
     call_next if has_next?
   }

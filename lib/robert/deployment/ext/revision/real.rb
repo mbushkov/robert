@@ -3,7 +3,7 @@ defn revision.real do
     rev = call_next
 
     logd "querying revision '#{rev}'" #TODO: specify scm here
-    real_rev = scm_query_revision(rev, lambda { |cmd| syscmd_output(cmd) })
+    real_rev = scm_query_revision(rev)
     logi "real revision: #{real_rev}"
 
     real_rev.to_s

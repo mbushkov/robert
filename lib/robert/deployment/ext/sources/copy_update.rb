@@ -12,7 +12,7 @@ defn sources.copy_update do
       brev.setup!
       FileUtils.rm_rf(brev.src_path)
       FileUtils.cp_r(build_repository[rev].src_path, brev.src_path)
-      syscmd scm_sync(revision, brev.src_path)
+      scm_sync(revision, brev.src_path)
     end
   }
 end
