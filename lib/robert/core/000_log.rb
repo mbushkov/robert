@@ -1,10 +1,10 @@
 ext :log do
-  var[:log,:level,:trace] = LOG_LEVEL_TRACE = 5
-  var[:log,:level,:debug] = LOG_LEVEL_DEBUG = 4
-  var[:log,:level,:info] = LOG_LEVEL_INFO = 3
-  var[:log,:level,:warning] = LOG_LEVEL_WARNING = 2
-  var[:log,:level,:error] = LOG_LEVEL_ERROR = 1
-  var[:log,:level,:fatal] = LOG_LEVEL_FATAL = 0
+  var[:*,:log,:level,:trace] = LOG_LEVEL_TRACE = 5
+  var[:*,:log,:level,:debug] = LOG_LEVEL_DEBUG = 4
+  var[:*,:log,:level,:info] = LOG_LEVEL_INFO = 3
+  var[:*,:log,:level,:warning] = LOG_LEVEL_WARNING = 2
+  var[:*,:log,:level,:error] = LOG_LEVEL_ERROR = 1
+  var[:*,:log,:level,:fatal] = LOG_LEVEL_FATAL = 0
 
   def log(level, message = nil, &block)
     raise ArgumentError, "either string or block should be provided" if message && block
