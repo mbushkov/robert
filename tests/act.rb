@@ -155,12 +155,12 @@ describe ActsContainer do
       @ac = flexmock(Object.new.extend(ActsContainer), :ctx_counter_inc => 0)
     end
 
-    it "defined act adds its name and counter to rule_ctx before execution" do
+    it "defined act adds its name to rule_ctx before execution" do
       @ac.instance_eval do
         act[:some_act] = backup.mysql
       end
 
-      @ctx.should_receive(:with_rule_ctx).with([:backup, :mysql, 0]).and_return(@ctx).once
+      @ctx.should_receive(:with_rule_ctx).with([:backup, :mysql]).and_return(@ctx).once
       
       @ac.acts[:some_act].call(@ctx)
     end

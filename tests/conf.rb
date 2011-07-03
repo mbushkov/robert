@@ -81,25 +81,19 @@ describe ConfigurationSelector do
 
   context "with_var" do
     before do
-      @conf = flexmock(:rules => [Rule.new([:a,:b,:c], 42),
-                                  Rule.new([:some_conf,:x,:y,:z], 43)],
+      @conf = flexmock(:orig_rules => [Rule.new([:some_conf,:*,:a,:b,:c], 42)],
                        :conf_name => :some_conf)
       @sel = ConfigurationSelector.new(@conf)
     end
 
-    it "returns true if there's a var with a matching context" do
+    it "returns true if there's a var with a matching context (configuration name is prepended when matching is done)" do
       @sel.with_var(:a, :b, :c).should be_true
-      @sel.with_var(:prea, :a, :b, :c).should be_true
     end
 
     it "returns false if there's no var with a matching context" do
       @sel.with_var(:b, :c).should be_false
       @sel.with_var(:a, :c).should be_false
       @sel.with_var(:a, :b, :c, :x, :y, :z, :some).should be_false
-    end
-
-    it "prepends configuration name to context used to match rules" do
-      @sel.with_var(:x,:y,:z).should be_true
     end
   end
 
@@ -137,13 +131,13 @@ describe ConfigurationSelector do
   it "prepends conf_name to rules' contexts" do
     @conf.var[:host,:user] = "admin"
 
-    @conf.rules.first.context.should == [:some_conf,:host,:user]
+    @conf.rules.first.context.should == [:some_conf,:*,:host,:user]
   end
 end
 
 describe ConfigurationsContainer do
   before do
-    @cc = flexmock(Object.new.extend(ConfigurationsContainer))
+    @cc = flexmock(Object.new.extend(ConfigurationsContainer, ExtsDefiner, RulesContainer)) #NOTE: get rid of ExtsDefiner and RulesContainer here
   end
 
   it "defines new configuration with a .conf call and a block" do
@@ -152,12 +146,13 @@ describe ConfigurationsContainer do
     @cc.confs_names.should include(:new_conf)
   end
 
-  it "accesses previously defined configuration with .conf call without a block" do
-    @cc.conf(:new_conf) do
-    end
-
-    @cc.conf(:new_conf).should_not be_nil
-  end
+# NOTE: deprecated behavior
+#  it "accesses previously defined configuration with .conf call without a block" do
+#    @cc.conf(:new_conf) do
+#    end
+#
+#    @cc.conf(:new_conf).should_not be_nil
+#  end
 
   it "raises when trying to get undefined configuration wuth .conf call" do
     ->{ @cc.conf(:new_conf) }.should raise_exception
@@ -178,24 +173,30 @@ describe ConfigurationsContainer do
     @cc.should_receive(:conf_called).with(:conf2)
 
     cc = @cc
-    @cc.confs(@cc.confs_names, :with_tags => :conf1) do
+    cc.confs(cc.confs_names, :with_tags => :conf1) do
       cc.conf_called(conf_name)
     end
+
+    #NOTE: we need to explicitly instantiate configurations
+    @cc.cclone(:conf1)
+    @cc.cclone(:conf2)
   end
 
-  it "returns enumerable from .confs call if no block is supplied" do
-    @cc.conf(:conf1) { tags << :conf1 }
-    @cc.conf(:conf2) { tags << :conf2 }
+#  NOTE: deprecated behavior
+#  it "returns enumerable from .confs call if no block is supplied" do
+#    @cc.conf(:conf1) { tags << :conf1 }
+#    @cc.conf(:conf2) { tags << :conf2 }
+#
+#    @cc.confs(:conf1, :conf2).should == [@cc.conf(:conf1), @cc.conf(:conf2)]
+#  end
 
-    @cc.confs(:conf1, :conf2).should == [@cc.conf(:conf1), @cc.conf(:conf2)]
-  end
-
-  it "selects configurations with .select and adds each_conf helper method to resulting enumerable" do
+  #TODO: rewrite in a clean way, add test that checks that "names" method is added
+  it "selects configurations with .select and returns cloned configurations in resulting enumerable" do
     @cc.conf(:conf1) {}
 
     @cc.should_receive(:conf_iterated).once
     
     cc = @cc
-    @cc.select { true }.each_conf { cc.conf_iterated }
+    cc.select { true }.each { |c| cc.conf_iterated if c.conf_name == :conf1 }
   end
 end
