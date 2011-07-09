@@ -1,4 +1,6 @@
 require 'rubygems'
+require 'bundler/setup'
+
 require 'robert/toplevel'
 
 $top = Robert::TopLevel.new
