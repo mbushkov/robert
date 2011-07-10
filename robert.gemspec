@@ -13,8 +13,10 @@ Gem::Specification.new do |s|
 
   s.rubygems_version = "1.3.7"
 
-  s.add_development_dependency "rspec"
+  s.add_development_dependency "aruba"
   s.add_development_dependency "cucumber"
+  s.add_development_dependency "flexmock"
+  s.add_development_dependency "rspec"
 
   s.files = `git ls-files`.split("\n")
   s.test_files = `git ls-files -- {spec,features}/*`.split("\n")
