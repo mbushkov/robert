@@ -2,13 +2,17 @@ source "http://rubygems.org"
 
 gem "activerecord"
 gem "capistrano"
-gem "cucumber"
 gem "daemons"
-gem "flexmock"
 gem "httparty"
 gem "json"
-gem "popen4"
+gem "open4"
 gem "rspec"
 gem "sqlite3"
 gem "term-ansicolor"
 gem "xmpp4r"
+
+group :development do
+  gem "aruba"
+  gem "cucumber"
+  gem "flexmock"
+end
