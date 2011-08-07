@@ -1,3 +1,27 @@
+var[:cmdline,:filtered,:names] = var[:cmdline, :names] = ->{ $top.cclone(:cli).filter_names(var[:cmdline,:unfiltered,:names]) }
+
+defn cli.all_keyword_to_names do
+  body { |names|
+    all_names = (names == [:all] ? $top.confs_names : names)
+    has_next? ? call_next(all_names) : all_names
+  }
+end
+      
+
+defn cli.filter_names_with_selector do
+  body { |names|
+    sel_opts = ConfigurationSelector.all_selectors.inject({}) do |memo, sel|
+      if var?[:cmdline,:args,sel.to_sym]
+        memo[sel] = var[:cmdline,:args,sel.to_sym]
+      end
+      memo
+    end
+    
+    filtered_names = (sel_opts != {} ? $top.select { |conf| names.include?(conf.conf_name) && with_options(sel_opts) }.names : names)
+    has_next? ? call_next(filtered_names) : filtered_names
+  }
+end
+
 defn cli.process_cmd do
   body {
     cmd = var[:cmdline,:cmd]
@@ -42,6 +66,7 @@ defn cli.eval_rule do
 end
 
 conf :cli do
+  act[:filter_names] = memo(cli.all_keyword_to_names(cli.filter_names_with_selector(act[:filter_with_user_specified_filters])))
   act[:process_cmd] = cli.process_cmd(cli.pass_cmd_to_confs)
   act[:eval] = cli.eval_rule
 end

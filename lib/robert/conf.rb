@@ -49,6 +49,10 @@ module Robert
         !send(k, *v)
       end
     end
+
+    def self.all_selectors
+      instance_methods(false).select { |m| m.to_s =~ /^with_.+/ }
+    end
   end
 
   class ConfigurationDescriptor
@@ -180,7 +184,7 @@ module Robert
     end
 
     def select(&block)
-      result = confs_names.map { |conf_name| cclone(conf_name) }.select { |conf| ConfigurationSelector.new(conf).instance_eval(&block) }
+      result = confs_names.map { |conf_name| cclone(conf_name) }.select { |conf| ConfigurationSelector.new(conf).instance_exec(conf, &block) }
       def result.names
         map { |conf| conf.conf_name }
       end

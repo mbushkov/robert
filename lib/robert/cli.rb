@@ -101,7 +101,8 @@ module Robert
         conf.var[:cmdline,:args,*v[0]] = v[1]
         # v[1] == true means argument without the right assignment part, i.e.: project1,project2
         if i == 0 && v[1]
-          conf.var(:cmdline,:names) { v[0] == :all ? conf.confs_names.to_a : [v[0]].flatten }
+          names = [v[0]].flatten
+          conf.var[:cmdline,:unfiltered,:names] = names
         end
       end
     end
