@@ -121,7 +121,7 @@ module Deployment
       dep = new_conf = nil
       if arg.respond_to?(:run) 
         new_conf = arg
-        dep = OpenStruct.new(:name => new_conf.project_name, :revision => new_conf.revision)
+        dep = OpenStruct.new(:name => new_conf.project_name, :revision => new_conf.revision.to_s)
       else
         dep = arg
         new_conf = configuration_getter.call(dep)
@@ -129,7 +129,7 @@ module Deployment
       
       Deployment.transaction do
         new_dep = new_snapshot.find_or_initialize_deployment_by_name(dep.name)
-        new_dep.revision = new_conf.revision
+        new_dep.revision = new_conf.revision.to_s
         new_dep.runtime_dependencies = new_conf.runtime_dependencies
         new_dep.deployed_at = Time.now
         new_dep.save!

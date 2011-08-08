@@ -9,7 +9,7 @@ var(:deployment,:build,:force) { var?[:cmdline,:args,:force_build] }
 var(:deployment,:deployment,:force) { var?[:cmdline,:args,:force_deploy] }
 
 defn cli.determine_area do
-  body { |names|
+  body { |confs|
     raise "not supported"
   }
 end
@@ -18,10 +18,10 @@ defn cli.deploy do
   body { |confs|
     dep_confs = confs
     deps = dep_confs.map do |dc|
-      Robert::Deployment::Deployment.new(:name => dc.conf_name, :revision => dc.revision)
+      Robert::Deployment::Deployment.new(:name => dc.conf_name, :revision => dc.revision.to_s)
     end
 
-    area_name = var?[:deployment,:area] || var?[:cmdline,:args,:area] || determine_area(names)
+    area_name = var?[:deployment,:area] || var?[:cmdline,:args,:area] || determine_area(dep_confs)
 
     used_configurations = Hash.new do |h,dep|
       $top.adjust do
@@ -55,11 +55,11 @@ conf :cli do
   act[:deploy] = deployment_db.with_connection(
                    deployment_db.migrate(
                      cli.prepare_deployment(
-                       names.from_cmdline(
-                         names.with_runtime_deps(
-                           names.remote_fresh_only(
-                             names.order_by_runtime_deps(
-                               cli.deploy)))))))
+                       confs_to_deploy.from_cmdline(
+                         confs_to_deploy.with_runtime_deps(
+#                           confs_to_deploy.remote_fresh_only(
+                             confs_to_deploy.order_by_runtime_deps(
+                               cli.deploy))))))#)
 
   var[:prepare_build,:deployment,:area] = :local
   act[:build] = deployment_db.with_connection(

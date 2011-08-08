@@ -12,8 +12,8 @@ class GitRevision
     time <=> other.time
   end
 
-  def from_s(str)
-    raise "invalid git revision string: #{str}" unless str =~ /^(.+)_(.+)$/
+  def self.from_s(str)
+    raise "invalid git revision string: '#{str}'" unless str =~ /^(.+)_(.+)$/
     GitRevision.new(Time.at($1.to_i), $2)
   end
   
@@ -65,8 +65,7 @@ end
 
 defn git.revision_from_str do
   body { |revision_str|
-    str_split = revision_str.split("_")
-    GitRevision.new(str_split[0].to_i, str_split[1])
+    GitRevision.from_s(revision_str)
   }
 end
 
