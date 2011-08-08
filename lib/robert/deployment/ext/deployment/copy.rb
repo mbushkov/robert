@@ -12,7 +12,7 @@ end
 defn deployment_copy.link_deployment do
   body {
     with_capistrano :roles => :app do |cap|
-      cap.run "sh '#{File.join(revision_deployment.deployment_root, link_script_name)}' '#{revision_deployment.deployment_root}'"
+      cap.run "sh '#{File.join(revision_deployment.deployment_root, link_script,:name)}' '#{revision_deployment.deployment_root}'"
     end
   }
 end
@@ -20,7 +20,7 @@ end
 defn deployment_copy.unlink_deployment do
   body {
     with_capistrano :roles => :app do |cap|
-      cap.run "sh '#{File.join(revision_deployment.deployment_root, unlink_script_name)}'"
+      cap.run "sh '#{File.join(revision_deployment.deployment_root, unlink_script,:name)}'"
     end
   }
 end
