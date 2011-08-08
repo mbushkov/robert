@@ -11,9 +11,9 @@ module Robert
     CORE_ADDONS_PATH = "#{File.dirname __FILE__}/core"
     CONTRIB_ADDONS_PATH= "#{File.dirname __FILE__}/contrib"
     
-    TOP_GLOBAL_CONFIGURATION_PATH = "/etc/robert2.rb"
-    GLOBAL_EXTENSIONS_PATH = "/usr/local/robert2/ext"
-    GLOBAL_CONFIGURATIONS_PATH = "/usr/local/robert2/conf"
+    TOP_GLOBAL_CONFIGURATION_PATH = "/etc/robert.rb"
+    GLOBAL_EXTENSIONS_PATH = "/usr/local/robert/ext"
+    GLOBAL_CONFIGURATIONS_PATH = "/usr/local/robert/conf"
 
     TOP_USER_CONFIGURATION_PATH = File.expand_path("~/.robert/robert.rb")
     USER_EXTENSIONS_PATH = File.expand_path("~/.robert/ext")
