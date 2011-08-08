@@ -5,7 +5,7 @@ require 'robert/deployment/core/deployment_list'
 conf :deployable do
   tags << :deployable
 
-  var[:local,:robert,:root] = var[:remote,:robert,:root] = "/usr/local/robert2"
+  var[:local,:robert,:root] = var[:remote,:robert,:root] = "/usr/local/robert"
   var[:local,:build,:misc] = ->{ "#{var[:local,:robert,:root]}/misc" }
   var[:local,:build,:repository] = -> { "#{var[:local,:robert,:root]}/build" }
   var[:remote,:deployment,:repository] = ->{ "#{var[:remote,:robert,:root]}/dep" }
@@ -54,6 +54,12 @@ conf :deployable do
 end
 
 conf :area do
+end
+
+conf "area:local" do
+  include :area
+  var[:role] = ["localhost"]
+  var[:role,:app] = ["localhost"]
 end
 
 conf :base_after do
