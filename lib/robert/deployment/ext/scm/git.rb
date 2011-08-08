@@ -2,6 +2,7 @@ require 'date'
 require 'fileutils'
 
 var[:git,:command] = "git"
+var[:git,:repository,:local,:command] = ->{ "#{var[:git,:command]} --git-dir='#{var[:git,:repository,:local,:path]}/.git'" }
 var[:git,:repository,:branch] = "remotes/origin/HEAD"
 var[:rsync,:command] = "rsync"
 
@@ -27,11 +28,11 @@ defn git.sync_local_repo do
   
     FileUtils.mkdir_p(git_path)
     Dir.chdir(git_path) do
-      if syscmd_status("#{var[:git,:command]} status") != 0
-        syscmd("#{var[:git,:command]} clone '#{var[:git,:repository]}' .")
+      if syscmd_status("#{var[:git,:repository,:local,:command]} status") != 0
+        syscmd("#{var[:git,:repository,:local,:command]} clone '#{var[:git,:repository]}' .")
       end
-      syscmd("#{var[:git,:command]} fetch")
-      syscmd("#{var[:git,:command]} checkout #{var[:git,:repository,:branch]}")
+      syscmd("#{var[:git,:repository,:local,:command]} fetch")
+      syscmd("#{var[:git,:repository,:local,:command]} checkout #{var[:git,:repository,:branch]}")
     end
 
     call_next(*args) if has_next?
@@ -47,7 +48,7 @@ end
 defn git.checkout do
   body { |revision, destination|
     Dir.chdir(var[:git,:repository,:local,:path]) do
-      syscmd("#{var[:git,:command]} reset --hard #{revision.revision_hash}")
+      syscmd("#{var[:git,:repository,:local,:command]} reset --hard #{revision.revision_hash}")
     end
     syscmd("#{var[:rsync,:command]} -auSx --delete --stats --temp-dir=/tmp #{var[:git,:repository,:local,:path]}/#{var[:git,:repository,:path]}/ #{destination}")
   }
@@ -56,7 +57,7 @@ end
 defn git.query_revision do
   body { |revision|
     Dir.chdir(var[:git,:repository,:local,:path]) do
-      rev_info = syscmd_output("#{var[:git,:command]} log -n 1 --pretty=format:%at,%H '#{revision}' -- #{var[:git,:repository,:path]}").split(",")      
+      rev_info = syscmd_output("#{var[:git,:repository,:local,:command]} log -n 1 --pretty=format:%at,%H '#{revision}' -- #{var[:git,:repository,:path]}").split(",")      
       GitRevision.new(rev_info[0].to_i, rev_info[1])
     end
   }
