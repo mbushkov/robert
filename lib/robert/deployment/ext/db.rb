@@ -1,4 +1,4 @@
-var[:robert,:deployment,:db,:path] = "/usr/local/robert2/db/robert.db"
+var[:robert,:deployment,:db,:path] = "/usr/local/robert/db/robert.db"
 
 defn deployment_db.with_connection do
 

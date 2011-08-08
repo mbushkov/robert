@@ -6,7 +6,7 @@ defn cli.prepare_build do
     force_build = var?[:cmdline,:args,:force_build]
 
     $top.adjust do
-      var[:deployment,:area] = :localhost
+      var[:deployment,:area] = :local
       
       $top.confs($top.confs_names, :with_tags => :deployable) do
         if force_sources
