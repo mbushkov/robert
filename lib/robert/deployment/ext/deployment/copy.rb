@@ -3,8 +3,8 @@ defn deployment_copy.deploy do
     archived_output = syscmd_output("tar -cf - -C #{revision_deployment.deployment_root} ./ | gzip -c", true)
     with_capistrano :roles => :app do |cap|
       cap.run "mkdir -p '#{revision_deployment.deployment_root}'"
-      cap.put archived_output, "#{File.join(revision_deployment.deployment_root, "deployment.tar.gz")}"
-      cap.run "tar -C '#{revision_deployment.deployment_root}' -xzf '#{File.join(revision_deployment.deployment_root, "deployment.tar.gz")}'"
+      cap.put archived_output, "#{File.join(revision_deployment.revision_root, "deployment.tar.gz")}"
+      cap.run "tar -C '#{revision_deployment.deployment_root}' -xzf '#{File.join(revision_deployment.revision_root, "deployment.tar.gz")}'"
     end
   }
 end
@@ -12,7 +12,7 @@ end
 defn deployment_copy.link_deployment do
   body {
     with_capistrano :roles => :app do |cap|
-      cap.run "sh '#{File.join(revision_deployment.deployment_root, link_script,:name)}' '#{revision_deployment.deployment_root}'"
+      cap.run "sh '#{File.join(revision_deployment.deployment_root, var[:deployment,:link_script,:name])}' '#{revision_deployment.deployment_root}'"
     end
   }
 end
@@ -20,7 +20,7 @@ end
 defn deployment_copy.unlink_deployment do
   body {
     with_capistrano :roles => :app do |cap|
-      cap.run "sh '#{File.join(revision_deployment.deployment_root, unlink_script,:name)}'"
+      cap.run "sh '#{File.join(revision_deployment.deployment_root, var[:deployment,:unlink_script,:name])}'"
     end
   }
 end
