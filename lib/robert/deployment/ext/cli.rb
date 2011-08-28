@@ -40,9 +40,12 @@ defn deployment_state.transaction_getter do
           $top.conf(dep.name) do
             include "area:#{area.name}"
             act[:revision] = revision.explicit { var[:revision] = dep.revision }
+
+            #NOTE: A bit of a hack since this action is also executedin prepare_build/prepare_deployment
+            include (area.name == "local" ? :deployment_local_build : :deployment_copy)
           end
         end
-        
+
         conf = $top.cclone(dep.name)
       end
       
@@ -86,6 +89,10 @@ defn cli.deploy do
   }
 end
 
+defn cli.prepare_build_or_deployment do
+  
+end
+
 defn cli.fast_rollback do
   body {
     deployment_state = $top.cclone(:deployment_state)
@@ -109,14 +116,19 @@ defn cli.fast_rollback do
       area.current_snapshot.save!
       
       area.current_snapshot = snapshot
-      
-      begin
-        Robert::Deployment::SnapshotTransactionCleaner.new(deployment_state.transaction_getter).clean_unfinished_snapshot(area)
-        logi("fast rollback OK")
-      rescue => e
-        logi("fast rollback failed: #{e}")
-        raise e
-      end
+      Robert::Deployment::SnapshotTransactionCleaner.new(deployment_state.transaction_getter).clean_unfinished_snapshot(area)
+    end
+  }
+end
+
+defn cli.show_status do
+  body {
+    begin
+      call_next
+      logi("#{var[:message]} OK")
+    rescue => e
+      logi("#{var[:message]} FAILED: #{e}")
+      raise e
     end
   }
 end
@@ -126,22 +138,29 @@ conf :cli do
   act[:deploy] = deployment_db.with_connection(
                    deployment_db.migrate(
                      cli.prepare_deployment(
-                       confs_to_deploy.from_cmdline(
-                         confs_to_deploy.with_runtime_deps(
-#                           confs_to_deploy.remote_fresh_only(
-                             confs_to_deploy.order_by_runtime_deps(
-                               cli.deploy))))))#)
+                       cli.show_status(
+                         confs_to_deploy.from_cmdline(
+                           confs_to_deploy.with_runtime_deps(
+#                             confs_to_deploy.remote_fresh_only(
+                               confs_to_deploy.order_by_runtime_deps(
+                                 cli.deploy)))))))
+  var[:deploy,:*,:show_status,:message] = "deployment"
 
   var[:prepare_build,:deployment,:area] = :local
   act[:build] = deployment_db.with_connection(
                   deployment_db.migrate(
                     cli.prepare_build(
-                      confs_to_deploy.from_cmdline(
-                        confs_to_deploy.local_fresh_only(
-                          confs_to_deploy.with_runtime_deps(
-                            confs_to_deploy.order_by_runtime_deps(
-                              cli.deploy)))))))
+                      cli.show_status(
+                        confs_to_deploy.from_cmdline(
+                          confs_to_deploy.local_fresh_only(
+                            confs_to_deploy.with_runtime_deps(
+                              confs_to_deploy.order_by_runtime_deps(
+                                cli.deploy))))))))
+  var[:build,:*,:show_status,:message] = "build"
+
   act[:fast_rollback] = deployment_db.with_connection(
                           deployment_db.migrate(
-                            cli.fast_rollback))
+                            cli.show_status(
+                              cli.fast_rollback)))
+  var[:fast_rollback,:*,:show_status,:message] = "fast rollback"
 end
