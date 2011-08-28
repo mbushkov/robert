@@ -45,7 +45,6 @@ conf :deployment_state do
   act[:transaction_getter] = deployment_state.transaction_getter
 end
 
-
 var(:deployment,:sources,:force) { var?[:cmdline,:args,:force_sources] }
 var(:deployment,:build,:force) { var?[:cmdline,:args,:force_build] }
 var(:deployment,:deployment,:force) { var?[:cmdline,:args,:force_deploy] }
