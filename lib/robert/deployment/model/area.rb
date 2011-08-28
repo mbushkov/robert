@@ -23,8 +23,8 @@ class Area < ActiveRecord::Base
     snapshots.find(:all, :order => "created_at DESC", :conditions => %q("exists" = 't'), :include => :deployments)
   end
   
-  def previous_snapshot_for_snapshot(snapshot)
-    snapshots.find(:first, :conditions => ["created_at < ?", snapshot.created_at], :order => "created_at DESC", :include => :deployments)
+  def previous_existent_snapshot_for_snapshot(snapshot)
+    snapshots.find(:first, :conditions => ["created_at < ? AND \"exists\" = 't'", snapshot.created_at], :order => "created_at DESC", :include => :deployments)
   end
   
   def find_snapshot_by_id(id)

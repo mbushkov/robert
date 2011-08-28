@@ -27,8 +27,13 @@ defn cli.prepare_build do
       end
     end
 
-    call_next
-    logi("build OK")
+    begin
+      call_next
+      logi("build OK")
+    rescue => e
+      loge("build FAILED: #{e}")
+      raise e
+    end
   }
 end
 

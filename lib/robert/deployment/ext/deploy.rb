@@ -9,8 +9,13 @@ defn cli.prepare_deployment do
       include :deployment_copy
     end
 
-    call_next
-    logi("deployment OK")
+    begin
+      call_next
+      logi("deployment OK")
+    rescue => e
+      loge("deployment FAILED: #{e}");
+      raise e
+    end
   }
 end
 
