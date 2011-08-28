@@ -62,6 +62,16 @@ module Robert
       process_rules
     end
 
+    def temporary(&block)
+      #HACK: requires accurate implementation, as this can be critical
+      backup = self.clone
+      begin
+        yield
+      ensure
+        $top = backup
+      end
+    end
+
     private
     attr_accessor :unchangeable_rules
 
