@@ -4,6 +4,19 @@ require 'robert/deployment/model/snapshot'
 require 'robert/deployment/core/snapshot_transaction'
 require 'robert/deployment/utils/dependency_resolver'
 
+defn deployment_state.area do
+  body {
+    raise "can't specify both area and sid in the command line" if var?[:cmdline,:args,:area] and var?[:cmdline,:args,:sid]
+
+    unless var?[:cmdline,:args,:sid]
+      area_name = var?[:deployment,:area] || var?[:cmdline,:args,:area] || determine_area(dep_confs)
+      Robert::Deployment::Area.find_or_create_by_name(area_name)
+    else
+      snapshot.area
+    end
+  }
+end
+
 defn deployment_state.snapshot do
   body {
     raise "can't specify both area and sid in the command line" if var?[:cmdline,:args,:area] and var?[:cmdline,:args,:sid]
@@ -108,19 +121,6 @@ defn cli.fast_rollback do
   }
 end
 
-defn deployment_state.area do
-  body {
-    raise "can't specify both area and sid in the command line" if var?[:cmdline,:args,:area] and var?[:cmdline,:args,:sid]
-
-    unless var?[:cmdline,:args,:sid]
-      area_name = var?[:deployment,:area] || var?[:cmdline,:args,:area] || determine_area(dep_confs)
-      Robert::Deployment::Area.find_or_create_by_name(area_name)
-    else
-      snapshot.area
-    end
-  }
-end
-
 conf :cli do
   act[:determine_area] = cli.determine_area
   act[:deploy] = deployment_db.with_connection(
@@ -141,5 +141,7 @@ conf :cli do
                           confs_to_deploy.with_runtime_deps(
                             confs_to_deploy.order_by_runtime_deps(
                               cli.deploy)))))))
-  act[:fast_rollback] = deployment_db.with_connection(deployment_db.migrate(cli.fast_rollback))
+  act[:fast_rollback] = deployment_db.with_connection(
+                          deployment_db.migrate(
+                            cli.fast_rollback))
 end
