@@ -28,6 +28,7 @@ defn cli.prepare_build do
     end
 
     call_next
+    logi("build OK")
   }
 end
 

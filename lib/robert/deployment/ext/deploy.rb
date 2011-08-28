@@ -10,6 +10,7 @@ defn cli.prepare_deployment do
     end
 
     call_next
+    logi("deployment OK")
   }
 end
 
