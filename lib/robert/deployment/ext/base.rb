@@ -49,7 +49,8 @@ conf :deployable do
   act[:sources] = sources.copy_update(sources.checkout)
   act[:src_patch] = src_patch.copy
   act[:dist_patch] = dist_patch.copy(dist_patch.link_scripts)
-  act[:runtime_dependencies] = runtime_dependencies.explicit { var[:list] = [] }
+  act[:runtime_dependencies] = dependencies.explicit { var[:list] = [] }
+  act[:build_dependencies] = dependencies.explicit { var[:list] = [] }
   act[:deployment_list] = deployment_list.empty
 end
 
