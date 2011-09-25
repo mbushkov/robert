@@ -7,7 +7,7 @@ defn sources.http do
     brev = build_repository[revision]
     brev.setup!
 
-    logd "fetching #{fetch(:http_sources_from)} to #{fetch(:http_sources_to)}"
+    logd "fetching #{var[:from]} to #{var[:to]}"
     open var[:from] do |fin|
       open("#{brev.src_path}/#{var[:to]}", "w") do |fout|
         fout.write(fin.read)
