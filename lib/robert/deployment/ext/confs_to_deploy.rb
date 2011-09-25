@@ -10,38 +10,42 @@ defn confs_to_deploy.from_cmdline do
   }
 end
 
-defn confs_to_deploy.with_runtime_deps do
+defn confs_to_deploy.with_deps do
   body { |confs|
+    deps_type = "#{var[:type].to_s}_dependencies".to_sym
+    
     confs_map = confs.inject(Hash.new { |h,k| h[k] = $top.conf?(k) && $top.cclone(k) }) do |memo, conf|
       memo[conf.conf_name] = conf; memo
     end
     
     getter = lambda do |name|
-      (confs_map[name] || nil) && confs_map[name].runtime_dependencies
+      (confs_map[name] || nil) && confs_map[name].send(deps_type)
     end
     
     prev_names = confs.map { |c| c.conf_name }
     next_names = Robert::Deployment::DependencyResolver.new(getter).add_required(confs.map { |c| c.conf_name }).to_a
 
-    logd "confs_to_deploy.with_runtime_deps, prev_names = #{prev_names}, passing further: #{next_names}"
+    logd "confs_to_deploy.with_deps (#{deps_type}), prev_names = #{prev_names}, passing further: #{next_names}"
     call_next next_names.map { |n| confs_map[n] || nil }.compact
   }
 end
 
-defn confs_to_deploy.order_by_runtime_deps do
+defn confs_to_deploy.order_by_deps do
   body { |confs|
+    deps_type = "#{var[:type].to_s}_dependencies".to_sym
+    
     confs_map = confs.inject(Hash.new { |h,k| h[k] = $top.conf?(k) && $top.cclone(k) }) do |memo, conf|
       memo[conf.conf_name] = conf; memo
     end
     
     getter = lambda do |name|
-      (confs_map[name] || nil) && confs_map[name].runtime_dependencies
+      (confs_map[name] || nil) && confs_map[name].send(deps_type)
     end
     
     prev_names = confs.map { |c| c.conf_name }
-    next_names = Robert::Deployment::DependencyResolver.new(getter).order_by_dependencies(confs.map { |c| c.conf_name }).reverse.to_a
+    next_names = Robert::Deployment::DependencyResolver.new(getter).order_by_dependencies(confs.map { |c| c.conf_name }).to_a
 
-    logd "confs_to_deploy.order_by_runtime_deps, prev_names = #{prev_names}, passing further: #{next_names}"
+    logd "confs_to_deploy.order_by_deps (#{deps_type}), prev_names = #{prev_names}, passing further: #{next_names}"
     call_next next_names.map { |n| confs_map[n] }
   }
 end

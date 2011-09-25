@@ -140,10 +140,18 @@ conf :cli do
                      cli.prepare_deployment(
                        cli.show_status(
                          confs_to_deploy.from_cmdline(
-                           confs_to_deploy.with_runtime_deps(
+                           confs_to_deploy.with_deps(
 #                             confs_to_deploy.remote_fresh_only(
-                               confs_to_deploy.order_by_runtime_deps(
-                                 cli.deploy)))))))
+                               confs_to_deploy.order_by_deps(
+                                 cli.deploy
+                               ) { var[:type] = :runtime }
+                           ) { var[:type] = :runtime }
+                         )
+                       )
+                     )
+                   )
+                 )
+                                                     
   var[:deploy,:*,:show_status,:message] = "deployment"
 
   var[:prepare_build,:deployment,:area] = :local
@@ -153,9 +161,22 @@ conf :cli do
                       cli.show_status(
                         confs_to_deploy.from_cmdline(
                           confs_to_deploy.local_fresh_only(
-                            confs_to_deploy.with_runtime_deps(
-                              confs_to_deploy.order_by_runtime_deps(
-                                cli.deploy))))))))
+                            confs_to_deploy.with_deps(
+                              confs_to_deploy.order_by_deps(                               
+                                confs_to_deploy.with_deps(
+                                  confs_to_deploy.order_by_deps(
+                                      cli.deploy
+                                  ) { var[:type] = :runtime }
+                                ) { var[:type] = :runtime }
+                              ) { var[:type] = :build }
+                            ) { var[:type] = :build }
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+                                  
   var[:build,:*,:show_status,:message] = "build"
 
   act[:fast_rollback] = deployment_db.with_connection(
