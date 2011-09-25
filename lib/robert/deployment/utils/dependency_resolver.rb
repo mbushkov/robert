@@ -41,7 +41,7 @@ module Deployment
         flag = false
         (0 .. (result_names.length - 2)).each do |i|
           (i .. (result_names.length - 1)).each do |j|
-            if deps[result_names[i]][:all_required].include? result_names[j]
+            if deps[result_names[i]][:all_required].include? result_names[j].to_s
               result_names[i], result_names[j] = result_names[j], result_names[i]
               flag = true
             end
