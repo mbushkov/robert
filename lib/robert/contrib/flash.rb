@@ -1,4 +1,6 @@
 ext :flash_builder do
+  require 'rexml/document'
+  
   class FlashXmlBuilder
     def initialize(project_name)
       @doc = REXML::Document.new
@@ -125,14 +127,14 @@ defn flash_builder.patch_sources do
   body {
     flex_sdk_path = var[:flex_sdk,:path]
     
-    builder = FlashXmlBuilder.new(project_name)
+    builder = FlashXmlBuilder.new(conf_name)
     builder.add_taskdef("flexTasks.tasks", "#{flex_sdk_path}/ant/lib/flexTasks.jar")
     builder.add_property("FLEX_HOME", flex_sdk_path)
     builder.add_property("APP_ROOT", revision_build.patched_src_path)
 
     call_next(builder)
 
-    builder.add_load_config("#{flex_sdk_path}/frameworks/" + var?[:use_air] ? "air-config.xml" : "flex-config.xml"))       
+    builder.add_load_config("#{flex_sdk_path}/frameworks/" + (var?[:use_air] ? "air-config.xml" : "flex-config.xml"))
     builder.add_source_path("#{revision_build.patched_src_path}/#{var?[:src_path] || "src"}")
     assets_path = "#{revision_build.patched_src_path}/#{var?[:assets_path] || "assets"}"
     builder.add_source_path(assets_path) if File.directory?(assets_path)
@@ -167,7 +169,7 @@ defn flash_builder.patch_library_sources do
     end
     builder.set_include_classes(classes)
     
-    output_name = var?[:output_swf_name] || "#{project_name}.swc"
+    output_name = var?[:output_swf_name] || "#{conf_name}.swc"
     output_path = "#{revision_build.dist_path}/#{output_name}"
     builder.set_output(output_path)        
   }
@@ -176,13 +178,13 @@ end
 defn flash_builder.patch_application_sources do
   body { |builder|
     builder.add_mxmlc_directive
-    target_path = var?[:mxml_target] || "#{project_name}.mxml"
-    target_path = "#{revision_build.patched_src_path}/#{var?[:src_path] || "src"}/target_path"
+    target_path = var?[:mxml_target] || "#{conf_name}.mxml"
+    target_path = "#{revision_build.patched_src_path}/#{var?[:src_path] || "src"}/#{target_path}"
     builder.set_mxml_target_path(target_path)
     builder.set_default_frame_rate(var?[:default_frame_rate] || 24)
     builder.set_default_background_color(var?[:default_background_color] || "0xffffff")
     
-    output_name = var?[:output_swf_name] || "#{project_name}.swf"
+    output_name = var?[:output_swf_name] || "#{conf_name}.swf"
     output_path = "#{revision_build.dist_path}/#{output_name}"
     builder.set_output(output_path)    
   }
@@ -190,13 +192,13 @@ end
 
 defn flash_builder.patch_air_descriptor do
   body {
-    app_descr_file = var?[:app_descr_target] || "#{project_name}-app.xml"
-    open("#{revision_build.patched_src_path}/#{var?[:src_path] || "src"}/#{app_descr_file}"), "r" do |fin|
+    app_descr_file = var?[:app_descr_target] || "#{conf_name}-app.xml"
+    open("#{revision_build.patched_src_path}/#{var?[:src_path] || "src"}/#{app_descr_file}", "r") do |fin|
       src_contents = fin.read
       ([""] + (1..3).map { |i| i.to_s }).each do |suffix|
-        contents = src_contents.gsub(project_name, project_name + suffix)
-        contents = contents.gsub("[This value will be overwritten by Flex Builder in the output app.xml]", "#{project_name}.swf")
-        open File.join(revision_build.dist_path, "#{project_name}#{suffix}-app.xml"), "w" do |fout|
+        contents = src_contents.gsub(conf_name.to_s, conf_name.to_s + suffix)
+        contents = contents.gsub("[This value will be overwritten by Flex Builder in the output app.xml]", "#{conf_name}.swf")
+        open File.join(revision_build.dist_path, "#{conf_name}#{suffix}-app.xml"), "w" do |fout|
           fout.write contents
         end
       end
@@ -207,16 +209,18 @@ end
 conf :flash_builder_library do
   use :flash_builder
 
-  act[:build_dependencies] = flash_builder.dependencies
-  act[:src_patch] = flash_builder.patch_sources(flash_builder.patch_library_sources)
+  act[:build_dependencies] = seq(act[:build_dependencies] || dummy.dummy, flash_builder.dependencies)
+  
+  act[:src_patch] = seq(act[:src_patch] || dummy.dummy, flash_builder.patch_sources(flash_builder.patch_library_sources))
   act[:build] = build.sh { var[:cmd] = "env ANT_OPTS=-Xmx500M ant" }
 end
 
 conf :flash_builder_application do
   use :flash_builder
 
-  act[:build_dependencies] = flash_builder.dependencies
-  act[:src_patch] = flash_builder.patch_sources(flash_builder.patch_application_sources)
+  act[:build_dependencies] = seq(act[:build_dependencies] || dummy.dummy, flash_builder.dependencies)
+  
+  act[:src_patch] = seq(act[:src_patch] || dummy.dummy, flash_builder.patch_sources(flash_builder.patch_application_sources))
   act[:build] = build.sh { var[:cmd] = "env ANT_OPTS=-Xmx500M ant" }
 end
 
